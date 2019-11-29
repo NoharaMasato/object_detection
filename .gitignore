@@ -1,3 +1,5 @@
 output_videos/*.mp4
 __pycache__
 weights/*.pth
+numpy_array/*.npy
+sample_videos/*.mp4

@@ -9,7 +9,7 @@ import numpy as np
 import sys
 from myobject import MyFrame
 from myobject import MyObject
-from myobject import MyVideo
+from myobject import MyVideoNormal
 from myobject import MyVideoAV
 
 
@@ -30,44 +30,26 @@ def detect_object_from_key_frame(filepath,mvs):
             myvideoav.init_meta_data(myframe.data)
 
         myvideoav.frames.append(myframe)
-
         #ここで、key_frameとそれ以外に分けて、物体検知をしたポインタを返したい
-        if myframe.key_frame:
+        if myframe.key_frame or myvideoav.is_objects_overlaped(): #物体がかぶっている時ももう一度ssdにかける
             myvideoav.reset_objects()
             pts, display_txts = ssd_model_opencv.detect_from_ssd(myframe.data,myframe.cnt)
             for pt, display_txt in zip(pts, display_txts):
                 myobject = MyObject(pt,display_txt,(255,0,0))
                 myvideoav.add_object(myobject)
-        #else:
-            #pts_tmp = ssd_model_opencv.detect_from_mv(myframe.data,myframe.cnt,myframe.mvs)
-            ## フレームにある一定の大きさ以上の動きベクトルの塊があった場合にのみ置き換える。その他場合は以前のフレームのものをそのまま使う
-            #pts_tmp2 = []
-            #for pt_tmp in pts_tmp:
-            #    flag = False
-            #    for former_pt in former_pts:
-            #        threash = 10
-            #        if pt_tmp[2] < former_pt[0]-threash or pt_tmp[0]-threash > former_pt[2] or pt_tmp[1]-threash > former_pt[3] or pt_tmp[3]-threash < former_pt[1]:
-            #            1 + 1
-            #        else:
-            #            flag = True
-            #    if flag == True:
-            #        pts_tmp2.append(pt_tmp)
-
-            #if len(pts_tmp2) >= 1:
-            #    pts = pts_tmp2
-            #    box_color = (0,255,0)
-
-        #for pt, display_txt in zip(pts, display_txts):
-        #    cv2.rectangle(frame, (pt[0], pt[1]), (pt[2], pt[3]), color=box_color, thickness=2)
-        #    cv2.putText(frame, display_txt,(pt[0],pt[1]),cv2.FONT_HERSHEY_SIMPLEX,1,box_color,2,cv2.LINE_AA)
-
-        #former_pts = pts
+        else:
+            pts_tmp = ssd_model_opencv.detect_from_mv(myframe.data,myframe.cnt,myframe.mvs)
+            for myobject in myvideoav.objects:
+                if (len(pts_tmp) != 0):
+                    next_pt = myvideoav.select_nearest_pt(pts_tmp,myobject)
+                    myobject.move(next_pt) #objectを動かす
+            myframe.embed_object_to_frame(myvideoav.objects) # 動かしたobjectをフレームに書き込む
 
         # 動画を表示する
         myvideoav.forward_frame(save = 1)
 
 def detect_object_from_all_frame(file_path):
-    myvideo = MyVideo(file_path)
+    myvideo = MyVideoNormal(file_path)
     cnt=0
 
     while(myvideo.cap.isOpened()):
@@ -75,7 +57,7 @@ def detect_object_from_all_frame(file_path):
         myframe = myvideo.read_frame(cnt)
 
         if cnt == 1:
-            myvideo.set_width_and_height(myframe.data)
+            myvideo.init_meta_data(myframe.data)
         if myframe != 0:
            pts, display_txts = ssd_model_opencv.detect_from_ssd(myframe.data,cnt)
         else:
@@ -92,7 +74,7 @@ def detect_object_from_all_frame(file_path):
     myvideo.finish_play()
 
 def show_motion_vector(file_path,mvs):
-    myvideo = MyVideo(file_path)
+    myvideo = MyVideoNormal(file_path)
     cnt=0
 
     while(myvideo.cap.isOpened()):
@@ -110,7 +92,7 @@ def show_motion_vector(file_path,mvs):
     myvideo.finish_play()
 
 def just_play(file_path):
-    myvideo = MyVideo(file_path)
+    myvideo = MyVideoNormal(file_path)
     cnt=0
 
     while(myvideo.cap.isOpened()):

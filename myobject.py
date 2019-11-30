@@ -33,20 +33,21 @@ class MyVideo:
     def add_object(self,my_object):
         self.objects.append(my_object)
 
-    def forward_frame(self,save = 0):
+    def forward_frame(self,save = 0,play = 1):
         myframe = self.frames[-1]
         myframe.embed_object_to_frame(self.objects)
 
         if save != 0:
             myframe.save_frame(self)
-        myframe.display_frame()
+        if play != 0:
+            myframe.display_frame()
 
     def is_objects_overlaped(self):
         myobjects = self.objects
         for i in range(len(myobjects)):
             for j in range(i+1,len(myobjects)):
                 # i番目のmyobjectとj番目のobjectとかぶっていないかをチェックする
-                if myobjects[i].is_object_overlapped(myobjects[j]):
+                if myobjects[i].object_distance(myobjects[j]) < 200:
                     return True
         return False
 
@@ -76,7 +77,6 @@ class MyVideoAV(MyVideo):
 
 
 class MyFrame:
-
     def __init__(self,frame,key_frame,cnt,mvs = []):
         self.cnt = cnt
         self.data = frame
@@ -113,7 +113,6 @@ class MyFrame:
         return pt
 
 class MyObject:
-
     def __init__(self,pt,text,color):
         self.text = text
         self.pt = pt
@@ -122,19 +121,16 @@ class MyObject:
     # 動きを計算して、次の位置を返す
     def move(self,next_pt):
         # 動きすぎの問題と、形が変わりすぎの問題を解決して、ptをselfにセットする
-        grad = 20 #一度に動いてよい範囲
+        grad = 15 #一度に動いてよい範囲(犬の動画は15ぐらいがちょうど良い)
         for i in range(4):
-            if self.pt[i] - next_pt[i] >= 20:
-                self.pt[i] -= 20
-            elif next_pt[i] - self.pt[i] >= 20:
-                self.pt[i] += 20 
+            if self.pt[i] - next_pt[i] >= grad:
+                self.pt[i] -= grad
+            elif next_pt[i] - self.pt[i] >= grad:
+                self.pt[i] += grad
             else:
                 self.pt[i] = next_pt[i]
 
-    def is_object_overlapped(self,myobject):
+    def object_distance(self,myobject):
         distance = ((self.pt[0]+self.pt[2])/2 - (myobject.pt[0]+myobject.pt[2])/2)**2 + ((self.pt[1]+self.pt[3])/2 - (myobject.pt[1]+myobject.pt[3])/2)**2 
-        if (distance <= 100):
-            return True
-        else:
-            return False
+        return distance
 

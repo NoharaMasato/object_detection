@@ -32,21 +32,23 @@ def detect_object_from_key_frame(filepath,mvs):
         myvideoav.frames.append(myframe)
         #ここで、key_frameとそれ以外に分けて、物体検知をしたポインタを返したい
         if myframe.key_frame or myvideoav.is_objects_overlaped(): #物体がかぶっている時ももう一度ssdにかける
+            print("ssd" + str(cnt))
             myvideoav.reset_objects()
             pts, display_txts = ssd_model_opencv.detect_from_ssd(myframe.data,myframe.cnt)
             for pt, display_txt in zip(pts, display_txts):
-                myobject = MyObject(pt,display_txt,(255,0,0))
+                myobject = MyObject(pt,display_txt,(0,0,255))
                 myvideoav.add_object(myobject)
         else:
+            print("mv" + str(cnt))
             pts_tmp = ssd_model_opencv.detect_from_mv(myframe.data,myframe.cnt,myframe.mvs)
             for myobject in myvideoav.objects:
                 if (len(pts_tmp) != 0):
                     next_pt = myvideoav.select_nearest_pt(pts_tmp,myobject)
                     myobject.move(next_pt) #objectを動かす
-            myframe.embed_object_to_frame(myvideoav.objects) # 動かしたobjectをフレームに書き込む
+                    myobject.color = (255,0,0)
 
-        # 動画を表示する
-        myvideoav.forward_frame(save = 1)
+        # 動画を表示する(frameにobjectsも書き込んでくれる)
+        myvideoav.forward_frame(save = 1,play = 1)
 
 def detect_object_from_all_frame(file_path):
     myvideo = MyVideoNormal(file_path)

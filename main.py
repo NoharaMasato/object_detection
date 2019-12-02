@@ -67,7 +67,7 @@ def detect_object_from_all_frame(file_path):
 
         myvideo.reset_objects()
         for pt, display_txt in zip(pts, display_txts):
-            myobject = MyObject(pt,display_txt,(255,0,0))
+            myobject = MyObject(pt,display_txt,(0,0,255))
             myvideo.add_object(myobject)
 
         myvideo.frames.append(myframe)

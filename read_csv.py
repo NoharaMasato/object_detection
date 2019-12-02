@@ -17,6 +17,11 @@ frame_height = 100
 #frame_width = 83 #pxを8で割った値に少し余裕を持たせておく
 #frame_height = 53
 
+# car.mp4
+#frame_num = 1021
+#frame_width = 50
+#frame_height = 100
+
 numpy_array_file_name = 'numpy_array/' # main.pyの中で書き換える
 
 # motion vectorを平均化する
@@ -80,5 +85,5 @@ def read_csv(csv_file_path):
     return frame_mvs
 
 if __name__ == '__main__':
-    read_csv("mv_csv/motion_vector2.csv")
+    read_csv("mv_csv/car.csv")
 

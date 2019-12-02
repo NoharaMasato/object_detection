@@ -100,7 +100,7 @@ def detect_from_mv(frame,cnt,mvs):
                 cnt = dfs(x,y,mvs)
                 if cnt >= 100:
                     grouping_cnt += 1
-                    #dfs_draw(x,y,mvs,frame) #ここで、mvの色を塗るかどうかを決める
+                    dfs_draw(x,y,mvs,frame) #ここで、mvの色を塗るかどうかを決める
                     global now_dt
                     now_dt = [x,y,x,y]
                     dfs_cnt_pt(x,y,mvs)

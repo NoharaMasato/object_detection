@@ -56,7 +56,7 @@ def read_csv(csv_file_path):
                 row[3] = int(row[3])
                 row[4] = int(row[4])
                 row[5] = int(row[5])
-                row[6] = int(row[5])
+                row[6] = int(row[6])
 
                 frame_mvs[frame_cnt][y][x].append(row)
 

@@ -12,6 +12,7 @@ import cv2
 import glob
 from ssd import build_ssd
 import read_csv
+import consts
 
  
 frame_num = read_csv.frame_num
@@ -98,9 +99,10 @@ def detect_from_mv(frame,cnt,mvs):
 
             if mvs[y][x] > mv_len_threash and grouping[y][x] == 0:
                 cnt = dfs(x,y,mvs)
+                if consts.DRAW_MV:
+                    dfs_draw(x,y,mvs,frame) #ここで、mvの色を塗るかどうかを決める
                 if cnt >= 100:
                     grouping_cnt += 1
-                    dfs_draw(x,y,mvs,frame) #ここで、mvの色を塗るかどうかを決める
                     global now_dt
                     now_dt = [x,y,x,y]
                     dfs_cnt_pt(x,y,mvs)

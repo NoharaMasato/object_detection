@@ -11,6 +11,7 @@ from myobject import MyFrame
 from myobject import MyObject
 from myobject import MyVideoNormal
 from myobject import MyVideoAV
+import consts
 
 
 def detect_object_from_key_frame(filepath,mvs):
@@ -23,7 +24,6 @@ def detect_object_from_key_frame(filepath,mvs):
         cnt+=1
         is_key_frame = frame.key_frame
         frame = frame.to_ndarray(format='bgr24')
-          
         myframe = MyFrame(frame,is_key_frame,cnt,mvs[cnt])
 
         if cnt == 1:
@@ -32,14 +32,12 @@ def detect_object_from_key_frame(filepath,mvs):
         myvideoav.frames.append(myframe)
         #ここで、key_frameとそれ以外に分けて、物体検知をしたポインタを返したい
         if myframe.key_frame or myvideoav.is_objects_overlaped(): #物体がかぶっている時ももう一度ssdにかける
-            print("ssd" + str(cnt))
             myvideoav.reset_objects()
             pts, display_txts = ssd_model_opencv.detect_from_ssd(myframe.data,myframe.cnt)
             for pt, display_txt in zip(pts, display_txts):
                 myobject = MyObject(pt,display_txt,(0,0,255))
                 myvideoav.add_object(myobject)
         else:
-            print("mv" + str(cnt))
             pts_tmp = ssd_model_opencv.detect_from_mv(myframe.data,myframe.cnt,myframe.mvs)
             for myobject in myvideoav.objects:
                 if (len(pts_tmp) != 0):
@@ -117,15 +115,14 @@ if __name__ == '__main__':
         print("引数にi or all or show_mv or play を入れてください")
         exit(1)
 
-    file_name = "dog_out"
+    file_name = consts.FILE_NAME
     file_path = "sample_videos/" + file_name + ".mp4"
-    csv_file_name = "mv_csv/" + file_name + ".csv"
-    read_csv.numpy_array_file_name += (file_name + ".npy")
-    mvs = read_csv.read_csv(csv_file_name)
 
     if args[1] == "all":
         detect_object_from_all_frame(file_path)
     elif args[1] == "i":
+        csv_file_name = "mv_csv/" + file_name + ".csv"
+        mvs = read_csv.read_csv(csv_file_name)
         detect_object_from_key_frame(file_path,mvs)
     elif args[1] == "show_mv":
         show_motion_vector(file_path,mvs)

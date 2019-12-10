@@ -1,28 +1,13 @@
 import csv
 import numpy as np
 import os
+import consts
 
-# vtest.mp4
-#frame_num = 800
-#frame_width = 100 #pxを8で割った値に少し余裕を持たせておく
-#frame_height = 100
+frame_num = consts.FRAME_NUM
+frame_width = consts.FRAME_WIDTH
+frame_height = consts.FRAME_HEIGHT
 
-# dog_out.mp4
-frame_num = 301
-frame_width = 170 #pxを8で割った値に少し余裕を持たせておく
-frame_height = 100
-
-# bike.mp4
-#frame_num = 150
-#frame_width = 83 #pxを8で割った値に少し余裕を持たせておく
-#frame_height = 53
-
-# car.mp4
-#frame_num = 1021
-#frame_width = 50
-#frame_height = 100
-
-numpy_array_file_name = 'numpy_array/' # main.pyの中で書き換える
+numpy_array_file_name = 'numpy_array/' + consts.FILE_NAME + ".npy"
 
 # motion vectorを平均化する
 def ave_mvs(frame_mvs):
@@ -62,10 +47,9 @@ def read_csv(csv_file_path):
             else:
                 frame_cnt= int(row[0].split()[-1])
                 row.pop(0)
-
                 x = int(int(row[3])/8)
                 y = int(int(row[4])/8)
-                #print(x,y)
+
                 row[0] = int(row[0])
                 row[1] = int(row[1])
                 row[2] = int(row[2])

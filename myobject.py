@@ -83,7 +83,6 @@ class MyFrame:
         self.data = frame
         self.key_frame = key_frame
         self.mvs = mvs
-        
 
     def delete_object(self):
         self.objects.delete() #objectのnameとpercentで絞って、削除をする
@@ -104,7 +103,6 @@ class MyFrame:
                     cv2.rectangle(self.data, (x*8, y*8), ((x+1)*8, (y+1)*8), color=(0,0,255), thickness=-1)
 
     def display_frame(self):
-        # 画質が良すぎると、oepncvは描写するのにかなり時間がかかってしまうため、画質を悪くする
         # frame rateを測る時は、画面を描写せずにやると、時間が早くなりそう
         frame = imutils.resize(self.data, width=450)
         cv2.imshow("Test", frame)

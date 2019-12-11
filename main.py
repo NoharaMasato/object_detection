@@ -79,7 +79,7 @@ def show_motion_vector(file_path,mvs):
 
     while(myvideo.cap.isOpened()):
         cnt+=1
-
+        print(cnt)
         myframe = myvideo.read_frame(cnt,mvs[cnt])
         if cnt == 1:
             myvideo.init_meta_data(myframe.data)
@@ -97,9 +97,9 @@ def just_play(file_path):
 
     while(myvideo.cap.isOpened()):
         cnt+=1
-        myframe = myvideo.read_frame(cnt,mvs[cnt])
+        myframe = myvideo.read_frame(cnt)
         if cnt == 1:
-            myvideo.set_width_and_height(myframe.data)
+            myvideo.init_meta_data(myframe.data)
         if myframe == 0:
             break
         myframe.save_frame(myvideo)
@@ -122,9 +122,11 @@ if __name__ == '__main__':
         detect_object_from_all_frame(file_path)
     elif args[1] == "i":
         csv_file_name = "mv_csv/" + file_name + ".csv"
-        mvs = read_csv.read_csv(csv_file_name)
+        mvs = read_csv.read_csv(csv_file_name) #vectorとして見るか、大きさだけで見るかによって返ってくるものが違う
         detect_object_from_key_frame(file_path,mvs)
     elif args[1] == "show_mv":
+        csv_file_name = "mv_csv/" + file_name + ".csv"
+        mvs = read_csv.read_csv(csv_file_name) #vectorとして見るか、大きさだけで見るかによって返ってくるものが違う
         show_motion_vector(file_path,mvs)
     elif args[1] == "play":
         just_play(file_path)

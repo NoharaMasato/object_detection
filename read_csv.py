@@ -17,6 +17,7 @@ def ave_mvs(frame_mvs):
     frame_mvs_ave_len= [[[0 for x in range(frame_width)] for y in range(frame_height)] for k in range(frame_num)] #大きさの平均
     frame_mvs_ave_cnt = [[[0 for x in range(frame_width)] for y in range(frame_height)] for k in range(frame_num)] #個数の平均
     for i in range(frame_num):
+        print("frame_number:"+str(i))
         for y in range(frame_height):
             for x in range(frame_width):
                 mv_len_sum = 0

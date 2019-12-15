@@ -69,7 +69,7 @@ def detect_object_from_all_frame(file_path):
             myvideo.add_object(myobject)
 
         myvideo.frames.append(myframe)
-        myvideo.forward_frame(save = 1)
+        myvideo.forward_frame(save = 1,play = 1)
 
     myvideo.finish_play()
 

@@ -8,6 +8,7 @@ class MyVideo:
     def __init__(self):
         self.frames = []
         self.objects = []
+        self.is_object_complex = False #物体が重なっていたり、対応しないptとobjectが存在するとき
 
     def reset_objects(self):
         self.objects = []
@@ -42,27 +43,43 @@ class MyVideo:
             myframe.save_frame(self)
         if play != 0:
             myframe.display_frame()
+        self.reset_is_moved()
 
-    def is_objects_overlaped(self):
+    def reset_is_moved(self): #毎フレーム行う
+        for myobject in self.objects:
+            myobject.is_moved = 0
+
+    def check_objects_overlaped(self):
         myobjects = self.objects
+        flag = False
         for i in range(len(myobjects)):
             for j in range(i+1,len(myobjects)):
                 # i番目のmyobjectとj番目のobjectとかぶっていないかをチェックする
                 if myobjects[i].object_distance(myobjects[j]) < 200:
-                    return True
-        return False
+                    flag = True
+                    break
+        if flag == True:
+            self.is_object_complex = True
+        else:
+            self.is_object_complex = False
 
-    # myobjectに適したptsを候補のptsから選び、戻り値として返す
-    def select_nearest_pt(self,pts,myobject):
-        before_pt = myobject.pt
-        # ptsの中からbefore_ptに一番近いものを選ぶ
-        nearest_pt = []
-        nearest_distance = 10000000 
-        for pt in pts:
-            distance = (pt[0]+pt[2]-(before_pt[0]-before_pt[2]))**2 + (pt[1]+pt[3]-(before_pt[1]-before_pt[3]))**2
-            if distance < nearest_distance: #近いという条件
-                nearest_pt = pt
-        return nearest_pt
+    def select_nearest_object_and_move(self,pt,vector): # ptとvectorを元にそこにくるobjectを見つける
+        direction = [vector[2]-vector[0],vector[3]-vector[0]]
+        #predicted_position = [pt[i] - direction[int(i/2)] for i in range(4)]
+        predicted_position = [pt[0]-direction[0],pt[1]-direction[1],pt[2]-direction[0],pt[3]-direction[1]]
+        find_object = False
+        for myobject in self.objects:
+            if myobject.is_moved == 0:
+                before_pt = myobject.pt
+                distance = (predicted_position[0]+predicted_position[2]-(before_pt[0]+before_pt[2]))**2 + (pt[1]+pt[3]-(before_pt[1]+before_pt[3]))**2 #ptの中心の距離
+                if distance < 7000:#対象のオブジェクトがあったら 
+                    myobject.move(pt)
+                    myobject.color = (255,0,0)
+                    myobject.is_moved = 1
+                    find_object = True
+                    break
+        if find_object == False:
+            self.is_object_complex = True
 
 # ただ再生したり、全てのframeにおいて、ssdモデルにかける時用
 class MyVideoNormal(MyVideo): #MyVideoクラスを継承
@@ -116,6 +133,7 @@ class MyObject:
         self.text = text
         self.pt = pt
         self.color = color
+        self.is_moving = 0 # フレーム内で動くと１になる(毎フレームリセット）
 
     # 動きを計算して、次の位置を返す
     def move(self,next_pt):

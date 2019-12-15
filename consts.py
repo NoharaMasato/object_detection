@@ -1,11 +1,12 @@
-DRAW_MV = 0
-VECTOR_DIR = 0
+DRAW_MV = 1
+VECTOR_DIR = 1
 
 #FILE_NAME = "vtest"
 #FILE_NAME = "dog_out"
 #FILE_NAME = "bike"
 #FILE_NAME = "car"
-FILE_NAME = "kanshi"
+#FILE_NAME = "kanshi"
+FILE_NAME = "kanshi2"
 
 if FILE_NAME == "vtest":
     FRAME_NUM = 800 #frame数+1にする
@@ -42,3 +43,9 @@ elif FILE_NAME == "kanshi":
     GRAD_FRAME = 15 
     LITERAL_SIZE = 1
 
+elif FILE_NAME == "kanshi2":
+    FRAME_NUM = 901
+    FRAME_WIDTH = 100
+    FRAME_HEIGHT = 50
+    GRAD_FRAME = 15 
+    LITERAL_SIZE = 1

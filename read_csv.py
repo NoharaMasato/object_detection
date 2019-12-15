@@ -32,22 +32,25 @@ def ave_mvs(frame_mvs):
     return frame_mvs_ave_cnt
 
 def ave_vector_dir(frame_mvs):
-    frame_mvs_ave_vector = [[[[0,0,0,0] for x in range(frame_width)] for y in range(frame_height)] for k in range(frame_num)] #大きさの平均
+    # frame_mvs_ave_vector[i][y][x] i番目のフレームのy,x座標のmotion vector(大きさ、sx,sy,yx,yy)の順で入っている
+    frame_mvs_ave_vector = [[[[0,0,0,0,0] for x in range(frame_width)] for y in range(frame_height)] for k in range(frame_num)] #大きさの平均
     for i in range(frame_num):
         print(i)
         for y in range(frame_height):
             for x in range(frame_width):
-                ave_row = [0,0,0,0]
+                ave_row = [0,0,0,0,0]
                 for yi in [-2,-1,0,1,2]:
                     for xi in [-2,-1,0,1,2]:
                         if y+yi >= 0 and y+yi < frame_height and x+xi >= 0 and x+xi < frame_width:
                             for mv in frame_mvs[i][y+yi][x+xi]:
                                 for j in range(4):
-                                    ave_row[j] += mv[j]
-                for j in range(4):
+                                    ave_row[j] += mv[j+3]
+                                ave_row[4] += ((mv[3]-mv[5])**2 + (mv[4]-mv[6])**2)
+                for j in range(5):
+                    print(i,y,x,j)
                     frame_mvs_ave_vector[i][y][x][j] = ave_row[j] / 25
 
-    np.save(numpy_array_file_name, np.array(frame_mvs_ave_vector))
+    np.save(numpy_array_vector_file_name, np.array(frame_mvs_ave_vector))
     return frame_mvs_ave_vector
 
 

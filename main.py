@@ -13,40 +13,49 @@ from myobject import MyVideoNormal
 from myobject import MyVideoAV
 import consts
 
-
+#処理の流れ
 def detect_object_from_key_frame(filepath,mvs):
     myvideoav = MyVideoAV(filepath)
-
     cnt=0
-
     former_pts = []
     for idx, frame in enumerate(myvideoav.video.decode(video=0)):
         cnt+=1
         is_key_frame = frame.key_frame
         frame = frame.to_ndarray(format='bgr24')
         myframe = MyFrame(frame,is_key_frame,cnt,mvs[cnt])
-
         if cnt == 1:
             myvideoav.init_meta_data(myframe.data)
 
         myvideoav.frames.append(myframe)
         #ここで、key_frameとそれ以外に分けて、物体検知をしたポインタを返したい
-        if myframe.key_frame or myvideoav.is_objects_overlaped(): #物体がかぶっている時ももう一度ssdにかける
+        if myframe.key_frame or myvideoav.is_object_complex: #物体がかぶっている時ももう一度ssdにかける
+            if cnt >= 250: 
+                breakpoint()
+            if myframe.key_frame:
+                print("I frame")
             myvideoav.reset_objects()
             pts, display_txts = ssd_model_opencv.detect_from_ssd(myframe.data,myframe.cnt)
             for pt, display_txt in zip(pts, display_txts):
                 myobject = MyObject(pt,display_txt,(0,0,255))
                 myvideoav.add_object(myobject)
+            myvideoav.is_object_complex = False
         else:
-            pts_tmp = ssd_model_opencv.detect_from_mv(myframe.data,myframe.cnt,myframe.mvs)
-            for myobject in myvideoav.objects:
+            if consts.VECTOR_DIR == 0:
+                pts_tmp = ssd_model_opencv.detect_from_mv(myframe.data,myframe.cnt,myframe.mvs)
                 if (len(pts_tmp) != 0):
-                    next_pt = myvideoav.select_nearest_pt(pts_tmp,myobject)
-                    myobject.move(next_pt) #objectを動かす
-                    myobject.color = (255,0,0)
+                    for myobject in myvideoav.objects:
+                        next_pt = myvideoav.select_nearest_pt(pts_tmp,myobject)
+                        myobject.move(next_pt) #objectを動かす
+                        myobject.color = (255,0,0)
+            else: #こっちがvectorの方向を考慮する
+                pts_tmp,vectors = ssd_model_opencv.detect_from_mv_vector(myframe.data,myframe.cnt,myframe.mvs)
+                for pt_tmp, vector in zip(pts_tmp, vectors):
+                    myvideoav.select_nearest_object_and_move(pt_tmp,vector)
 
         # 動画を表示する(frameにobjectsも書き込んでくれる)
         myvideoav.forward_frame(save = 1,play = 1)
+        if cnt>250:
+            breakpoint()
 
 def detect_object_from_all_frame(file_path):
     myvideo = MyVideoNormal(file_path)

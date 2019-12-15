@@ -44,26 +44,27 @@ def dfs(nowx,nowy,mvs):
     for i in range(4):
         nextx = nowx + nx[i]
         nexty = nowy + ny[i]
-        if (nextx>=0 and nexty>=0 and mvs[nowy][nowx] > mv_len_threash and grouping[nexty][nextx] == 0):
+        if (nextx>=0 and nexty>=0 and mvs[nowy][nowx][4] > mv_len_threash and grouping[nexty][nextx] == 0):
             node_cnt+=dfs(nextx,nexty,mvs)
 
     return node_cnt + 1
 
 def dfs_draw(nowx,nowy,mvs,frame):
     global grouping_draw,grouping_cnt
-    if mvs[nowy][nowx] > mv_len_threash:
+    if mvs[nowy][nowx][4] > mv_len_threash:
         cv2.rectangle(frame, (nowx*8, nowy*8), ((nowx+1)*8, (nowy+1)*8), color=(255, 0, 0), thickness=-1) # thickness = -1は塗りつぶす
         grouping_draw[nowy][nowx] = grouping_cnt
         for i in range(4):
             nextx = nowx + nx[i]
             nexty = nowy + ny[i]
-            if (nextx>=0 and nexty>=0 and mvs[nowy][nowx] > mv_len_threash and grouping_draw[nexty][nextx] == 0):
+            if (nextx>=0 and nexty>=0 and mvs[nowy][nowx][4] > mv_len_threash and grouping_draw[nexty][nextx] == 0):
                 dfs_draw(nextx,nexty,mvs,frame)
 
 now_dt = []
+vector = [0,0,0,0]
 def dfs_cnt_pt(nowx,nowy,mvs):
-    if mvs[nowy][nowx] > mv_len_threash:
-        global grouping_pt,grouping_cnt
+    if mvs[nowy][nowx][4] > mv_len_threash:
+        global grouping_pt,grouping_cnt,vector
         grouping_pt[nowy][nowx] = grouping_cnt
         global now_dt
         if nowx < now_dt[0]:
@@ -76,9 +77,12 @@ def dfs_cnt_pt(nowx,nowy,mvs):
             now_dt[3] = nowy
 
         for i in range(4):
+            vector[i] += mvs[nowy][nowx][i]
+
+        for i in range(4):
             nextx = nowx + nx[i]
             nexty = nowy + ny[i]
-            if (nextx>=0 and nexty>=0 and mvs[nowy][nowx] > mv_len_threash and grouping_pt[nexty][nextx] == 0):
+            if (nextx>=0 and nexty>=0 and mvs[nowy][nowx][4] > mv_len_threash and grouping_pt[nexty][nextx] == 0):
                 dfs_cnt_pt(nextx,nexty,mvs)
 
 def detect_from_mv(frame,cnt,mvs):
@@ -97,11 +101,11 @@ def detect_from_mv(frame,cnt,mvs):
     for y in range(frame_height):
         for x in range(frame_width):
 
-            if mvs[y][x] > mv_len_threash and grouping[y][x] == 0:
+            if mvs[y][x][4] > mv_len_threash and grouping[y][x] == 0:
                 cnt = dfs(x,y,mvs)
-                if consts.DRAW_MV:
-                    dfs_draw(x,y,mvs,frame) #ここで、mvの色を塗るかどうかを決める
                 if cnt >= 100:
+                    if consts.DRAW_MV:
+                        dfs_draw(x,y,mvs,frame) #ここで、mvの色を塗るかどうかを決める
                     grouping_cnt += 1
                     global now_dt
                     now_dt = [x,y,x,y]
@@ -114,6 +118,43 @@ def detect_from_mv(frame,cnt,mvs):
                     now_dt[3] += 8
                     pts.append(now_dt)
     return pts
+
+def detect_from_mv_vector(frame,cnt,mvs):
+    global grouping_cnt, grouping, grouping_draw, grouping_pt,vector
+
+    grouping_cnt = 1
+    for y in range(frame_height):
+        for x in range(frame_width):
+            grouping[y][x] = 0
+            grouping_draw[y][x] = 0
+            grouping_pt[y][x] = 0
+
+    node_cnt = 0
+    pts = []
+    vectors = []
+    for y in range(frame_height):
+        for x in range(frame_width):
+            if mvs[y][x][4] > mv_len_threash and grouping[y][x] == 0:
+                cnt = dfs(x,y,mvs)
+                if cnt >= 50:
+                    if consts.DRAW_MV:
+                        dfs_draw(x,y,mvs,frame) #ここで、mvの色を塗るかどうかを決める
+                    grouping_cnt += 1
+                    global now_dt
+                    now_dt = [x,y,x,y]
+                    vector = [0,0,0,0]
+                    dfs_cnt_pt(x,y,mvs)
+                    now_dt[0] *= 8
+                    now_dt[1] *= 8
+                    now_dt[2] *= 8
+                    now_dt[2] += 8
+                    now_dt[3] *= 8
+                    now_dt[3] += 8
+                    for i in range(4):
+                        vector[i] /= cnt 
+                    pts.append(now_dt)
+                    vectors.append(vector)
+    return pts,vectors
 
 # 関数 detect    
 def detect_from_ssd(image, count):

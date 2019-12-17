@@ -1,13 +1,14 @@
 DRAW_MV = 1
 VECTOR_DIR = 1
-ACCURACY = 0 #精度を求めるか
+ACCURACY = 0 #精度を求めるか(現在は犬の動画しかground truthを取っていないためその他の動画では不可能)
+MV_THREASH = 0.3 #mvの大きさのスレッシュホールド
 
 #FILE_NAME = "vtest"
-#FILE_NAME = "dog_out"
+FILE_NAME = "dog_out"
 #FILE_NAME = "bike"
 #FILE_NAME = "car"
 #FILE_NAME = "kanshi"
-FILE_NAME = "kanshi2"
+#FILE_NAME = "kanshi2"
 
 if FILE_NAME == "vtest":
     FRAME_NUM = 800 #frame数+1にする

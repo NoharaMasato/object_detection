@@ -19,7 +19,7 @@ frame_num = read_csv.frame_num
 frame_width = read_csv.frame_width
 frame_height = read_csv.frame_height
 
-mv_len_threash = 0.3
+mv_len_threash = consts.MV_THREASH
 
 # SSDモデルを読み込み
 net = build_ssd('test', 300, 21)   
@@ -49,6 +49,7 @@ def dfs(nowx,nowy,mvs):
 
     return node_cnt + 1
 
+# threashholdより大きいもののみ塗る
 def dfs_draw(nowx,nowy,mvs,frame):
     global grouping_draw,grouping_cnt
     if mvs[nowy][nowx] > mv_len_threash:

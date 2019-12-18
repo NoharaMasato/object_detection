@@ -10,10 +10,6 @@ sys.path.append('src')
 import ssd_model_opencv
 import read_csv
 from myobject import *
-#from myobject import MyFrame
-#from myobject import MyObject
-#from myobject import MyVideoNormal
-#from myobject import MyVideoAV
 import consts
 
 

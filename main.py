@@ -96,12 +96,9 @@ def just_play(file_path):
 
     while(myvideo.cap.isOpened()):
         cnt+=1
-        myframe = myvideo.read_frame(cnt,mvs[cnt])
-        if cnt == 1:
-            myvideo.set_width_and_height(myframe.data)
+        myframe = myvideo.read_frame(cnt)
         if myframe == 0:
             break
-        myframe.save_frame(myvideo)
         myframe.display_frame()
 
     myvideo.finish_play()

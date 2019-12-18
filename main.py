@@ -46,6 +46,40 @@ def detect_object_from_key_frame(filepath,mvs):
 
         # 動画を表示する(frameにobjectsも書き込んでくれる)
         myvideoav.forward_frame(save = consts.SAVE,play = consts.PLAY)
+    print("final_accuracy:" + str((sum(myvideoav.accuracies) / len(myvideoav.accuracies))*100) + "%")
+
+def change_detect_interval(filepath,mvs,interval):
+    myvideoav = MyVideoAV(filepath)
+    cnt=0
+    former_pts = []
+    for idx, frame in enumerate(myvideoav.video.decode(video=0)):
+        cnt+=1
+        is_key_frame = frame.key_frame
+        frame = frame.to_ndarray(format='bgr24')
+        myframe = MyFrame(frame,is_key_frame,cnt,mvs[cnt])
+
+        if cnt == 1:
+            myvideoav.init_meta_data(myframe.data)
+
+        myvideoav.frames.append(myframe)
+        #ここで、key_frameとそれ以外に分けて、物体検知をしたポインタを返したい
+        if (cnt-1)%interval == 0:
+            myvideoav.reset_objects()
+            pts, display_txts = ssd_model_opencv.detect_from_ssd(myframe.data,myframe.cnt)
+            for pt, display_txt in zip(pts, display_txts):
+                myobject = MyObject(pt,display_txt,(0,0,255))
+                myvideoav.add_object(myobject)
+        else:
+            pts_tmp = ssd_model_opencv.detect_from_mv(myframe.data,myframe.cnt,myframe.mvs)
+            for myobject in myvideoav.objects:
+                if (len(pts_tmp) != 0):
+                    next_pt = myvideoav.select_nearest_pt(pts_tmp,myobject)
+                    myobject.move(next_pt) #objectを動かす
+                    myobject.color = (255,0,0)
+
+        # 動画を表示する(frameにobjectsも書き込んでくれる)
+        myvideoav.forward_frame(save = consts.SAVE,play = consts.PLAY)
+    print("final_accuracy:" + str((sum(myvideoav.accuracies) / len(myvideoav.accuracies))*100) + "%")
 
 def detect_object_from_all_frame(file_path):
     myvideo = MyVideoNormal(file_path)
@@ -71,6 +105,7 @@ def detect_object_from_all_frame(file_path):
         myvideo.forward_frame(save = consts.SAVE,play = consts.PLAY)
 
     myvideo.finish_play()
+    print("final_accuracy:" + str((sum(myvideo.accuracies) / len(myvideo.accuracies))*100) + "%")
 
 def show_motion_vector(file_path,mvs):
     myvideo = MyVideoNormal(file_path)
@@ -124,6 +159,14 @@ if __name__ == '__main__':
         show_motion_vector(file_path,mvs)
     elif args[1] == "play":
         just_play(file_path)
+    elif args[1] == "inter":
+        csv_file_name = "mv_csv/" + file_name + ".csv"
+        mvs = read_csv.read_csv(csv_file_name)
+        for i in [2,3,5,10,15,30,50,100]:
+            start_inter = time.time()
+            change_detect_interval(file_path,mvs,i)
+            elapsed_time = time.time() - start_inter
+            print ("かかった時間:{0}".format(elapsed_time) + "[sec]:"+ str(i) + "枚ごとに検出")
 
     elapsed_time = time.time() - start
     print ("かかった時間:{0}".format(elapsed_time) + "[sec]")

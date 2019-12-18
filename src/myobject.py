@@ -26,7 +26,8 @@ class MyVideo:
         self.width = len(data[0])
         self.height = len(data)
         fourcc = cv2.VideoWriter_fourcc(*'MPEG')
-        self.out = cv2.VideoWriter('output_videos/output.mp4',fourcc, 20.0, (self.width,self.height))
+        if consts.SAVE:
+            self.out = cv2.VideoWriter('output_videos/output.mp4',fourcc, 20.0, (self.width,self.height))
         self.accuracies = []
 
     def finish_play(self):

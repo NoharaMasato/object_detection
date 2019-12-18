@@ -4,19 +4,7 @@ import av
 import numpy as np
 import consts
 import xml.etree.ElementTree as ET
-
-def bb_intersection_over_union(boxA, boxB):
-    xA = max(boxA[0], boxB[0])
-    yA = max(boxA[1], boxB[1])
-    xB = min(boxA[2], boxB[2])
-    yB = min(boxA[3], boxB[3])
-    interArea = abs(max((xB - xA, 0)) * max((yB - yA), 0))
-    if interArea == 0:
-        return 0
-    boxAArea = abs((boxA[2] - boxA[0]) * (boxA[3] - boxA[1]))
-    boxBArea = abs((boxB[2] - boxB[0]) * (boxB[3] - boxB[1]))
-    iou = interArea / float(boxAArea + boxBArea - interArea)
-    return iou
+import accuracy
 
 class MyVideo:
     def __init__(self):
@@ -61,14 +49,14 @@ class MyVideo:
             print("accuracy:" + str((sum(self.accuracies) / len(self.accuracies))*100) + "%,IoU:"+str(self.accuracies[-1]))
 
     def calculate_accuracy(self,frame_cnt):
-        xml_file = "../anotation/dog_xml/image_" + str(frame_cnt).zfill(3) + ".xml"
+        xml_file = "gt/"+consts.FILE_NAME+"/image_" + str(frame_cnt).zfill(3) + ".xml"
         xml_data = open(xml_file, "r").read()
         root = ET.fromstring(xml_data)
         pt = [0,0,0,0]
         if len(self.objects) > 0:
             pt = self.objects[0].pt
         groud_truth = [int(root[6][4][i].text) for i in range(4)]
-        IoU = bb_intersection_over_union(pt,groud_truth)
+        IoU = accuracy.bb_iou(pt,groud_truth)
         self.accuracies.append(IoU)
 
     def is_objects_overlaped(self):

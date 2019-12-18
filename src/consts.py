@@ -1,6 +1,6 @@
-DRAW_MV = 1
+DRAW_MV = 0
 VECTOR_DIR = 1
-ACCURACY = 0 #精度を求めるか(現在は犬の動画しかground truthを取っていないためその他の動画では不可能)
+ACCURACY = 1 #精度を求めるか(現在は犬の動画しかground truthを取っていないためその他の動画では不可能)
 MV_THREASH = 0.3 #mvの大きさのスレッシュホールド
 
 #FILE_NAME = "vtest"

@@ -5,4 +5,7 @@ numpy_array/*.npy
 sample_videos/*.mp4
 .DS_Store
 ,./
-
+''
+houkousei.txt
+gt/*
+!gt/.keep

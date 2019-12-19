@@ -4,7 +4,9 @@ SAVE = 0
 DRAW_MV = 0
 VECTOR_DIR = 1
 ACCURACY = 1 #精度を求めるか(現在は犬の動画しかground truthを取っていないためその他の動画では不可能)
-ACCURACY_PRINT = 0 #精度を求めるか(現在は犬の動画しかground truthを取っていないためその他の動画では不可能)
+if ACCURACY == 1:
+    ACCURACY_PRINT = 0 #精度を毎回表示するか
+    I_INTER_VALS = [2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100,150]
 
 MV_THREASH = 0.3 #mvの大きさのスレッシュホールド
 

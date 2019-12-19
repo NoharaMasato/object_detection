@@ -4,6 +4,7 @@ import cv2
 from PIL import Image
 import av
 import numpy as np
+import matplotlib.pyplot as plt
 import sys
 
 sys.path.append('src')
@@ -79,7 +80,7 @@ def change_detect_interval(filepath,mvs,interval):
 
         # 動画を表示する(frameにobjectsも書き込んでくれる)
         myvideoav.forward_frame(save = consts.SAVE,play = consts.PLAY)
-    print("final_accuracy:" + str((sum(myvideoav.accuracies) / len(myvideoav.accuracies))*100) + "%")
+    return sum(myvideoav.accuracies) / len(myvideoav.accuracies)
 
 def detect_object_from_all_frame(file_path):
     myvideo = MyVideoNormal(file_path)
@@ -162,12 +163,22 @@ if __name__ == '__main__':
     elif args[1] == "inter":
         csv_file_name = "mv_csv/" + file_name + ".csv"
         mvs = read_csv.read_csv(csv_file_name)
-        for i in [2,3,5,10,15,30,50,100]:
-            start_inter = time.time()
-            change_detect_interval(file_path,mvs,i)
-            elapsed_time = time.time() - start_inter
-            print ("かかった時間:{0}".format(elapsed_time) + "[sec]:"+ str(i) + "枚ごとに検出")
 
+        elapsed_times = []
+        accuracies = []
+        for i in consts.I_INTER_VALS:
+            start_inter = time.time()
+            accuracies.append(change_detect_interval(file_path,mvs,i))
+            elapsed_time = time.time() - start_inter
+            elapsed_times.append(elapsed_time)
+            print ("かかった時間:{0}".format(elapsed_time) + "[sec]:"+ str(i) + "枚ごとに検出,最終的な精度:" + str(accuracies[-1]) + "%")
+
+        for x,y,k in zip(elapsed_times,accuracies,consts.I_INTER_VALS):
+            plt.plot(x,y,'o')
+            plt.annotate(round(300/k,1), xy=(x,y))
+        plt.xlabel('time [s]')
+        plt.ylabel('accuracy [%]')
+        plt.show()
     elapsed_time = time.time() - start
     print ("かかった時間:{0}".format(elapsed_time) + "[sec]")
 

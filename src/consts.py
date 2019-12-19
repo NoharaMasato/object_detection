@@ -1,6 +1,13 @@
 PLAY = 1
 SAVE = 0
 
+SSD = 0
+YOLO = 1
+
+if SSD + YOLO != 1:
+    print("SSD or YOLOのどちらかを1にしてください")
+    exit(0)
+
 DRAW_MV = 0
 VECTOR_DIR = 1
 ACCURACY = 0 #精度を求めるか(現在は犬の動画しかground truthを取っていないためその他の動画では不可能)

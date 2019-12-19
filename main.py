@@ -9,6 +9,7 @@ import sys
 
 sys.path.append('src')
 import ssd_model_opencv
+import yolo
 import read_csv
 from myobject import *
 import consts
@@ -94,7 +95,10 @@ def detect_object_from_all_frame(file_path):
         if cnt == 1:
             myvideo.init_meta_data(myframe.data)
         if myframe != 0:
-           pts, display_txts = ssd_model_opencv.detect_from_ssd(myframe.data,cnt)
+            if consts.SSD:
+                pts, display_txts = ssd_model_opencv.detect_from_ssd(myframe.data,cnt)
+            if consts.YOLO:
+                pts, display_txts = yolo.detect_from_yolo(myframe.data,cnt)
         else:
             break
 

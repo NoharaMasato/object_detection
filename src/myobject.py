@@ -47,8 +47,8 @@ class MyVideo:
             myframe.display_frame()
         if consts.ACCURACY == 1:
             self.calculate_accuracy(len(self.frames))
-        if consts.ACCURACY_PRINT == 1:
-            print("accuracy:" + str((sum(self.accuracies) / len(self.accuracies))*100) + "%,IoU:"+str(self.accuracies[-1]))
+            if consts.ACCURACY_PRINT == 1:
+                print("accuracy:" + str((sum(self.accuracies) / len(self.accuracies))*100) + "%,IoU:"+str(self.accuracies[-1]))
 
     def calculate_accuracy(self,frame_cnt):
         xml_file = "gt/"+consts.FILE_NAME+"/image_" + str(frame_cnt).zfill(3) + ".xml"

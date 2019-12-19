@@ -187,6 +187,9 @@ if __name__ == '__main__':
         plt.xlabel('time [s]')
         plt.ylabel('accuracy [%]')
         plt.show()
+    else:
+        print("引数にi or all or show_mv or play を入れてください")
+        exit(1)
     elapsed_time = time.time() - start
     print ("かかった時間:{0}".format(elapsed_time) + "[sec]")
 

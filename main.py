@@ -48,6 +48,7 @@ def detect_object_from_key_frame(filepath,mvs):
         # 動画を表示する(frameにobjectsも書き込んでくれる)
         myvideoav.forward_frame(save = consts.SAVE,play = consts.PLAY)
     print("final_accuracy:" + str((sum(myvideoav.accuracies) / len(myvideoav.accuracies))*100) + "%")
+    return sum(myvideoav.accuracies) / len(myvideoav.accuracies)
 
 def change_detect_interval(filepath,mvs,interval):
     myvideoav = MyVideoAV(filepath)
@@ -176,6 +177,13 @@ if __name__ == '__main__':
         for x,y,k in zip(elapsed_times,accuracies,consts.I_INTER_VALS):
             plt.plot(x,y,'o')
             plt.annotate(round(300/k,1), xy=(x,y))
+
+        start_inter = time.time()
+        y = detect_object_from_key_frame(file_path,mvs) #Iフレームのみの回
+        x = time.time() - start_inter
+        plt.plot(x,y,'o')
+        plt.annotate("I", xy=(x,y))
+
         plt.xlabel('time [s]')
         plt.ylabel('accuracy [%]')
         plt.show()

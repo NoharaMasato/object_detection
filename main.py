@@ -3,6 +3,7 @@ import imutils
 import cv2
 from PIL import Image
 import av
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
@@ -16,10 +17,9 @@ import consts
 
 def detect_object_from_key_frame(filepath,mvs):
     myvideoav = MyVideoAV(filepath)
-
     cnt=0
-
     former_pts = []
+
     for idx, frame in enumerate(myvideoav.video.decode(video=0)):
         cnt+=1
         is_key_frame = frame.key_frame
@@ -38,17 +38,27 @@ def detect_object_from_key_frame(filepath,mvs):
                 myobject = MyObject(pt,display_txt,(0,0,255))
                 myvideoav.add_object(myobject)
         else:
-            pts_tmp = ssd_model_opencv.detect_from_mv(myframe.data,myframe.cnt,myframe.mvs)
-            for myobject in myvideoav.objects:
-                if (len(pts_tmp) != 0):
-                    next_pt = myvideoav.select_nearest_pt(pts_tmp,myobject)
+            if consts.VECTOR_DIR:
+                for myobject in myvideoav.objects:
+                    vector = myobject.caliculate_vector(myframe.data,myframe.mvs)
+                    print(vector,myobject.text)
+                    next_pt = [myobject.pt[i] + vector[i%2]*7 for i in range(4)]
                     myobject.move(next_pt) #objectを動かす
                     myobject.color = (255,0,0)
+            else:
+                pts_tmp = ssd_model_opencv.detect_from_mv(myframe.data,myframe.cnt,myframe.mvs)
+                for myobject in myvideoav.objects:
+                    if (len(pts_tmp) != 0):
+                        next_pt = myvideoav.select_nearest_pt(pts_tmp,myobject)
+                        myobject.move(next_pt) #objectを動かす
+                        myobject.color = (255,0,0)
 
         # 動画を表示する(frameにobjectsも書き込んでくれる)
         myvideoav.forward_frame(save = consts.SAVE,play = consts.PLAY)
-    print("final_accuracy:" + str((sum(myvideoav.accuracies) / len(myvideoav.accuracies))*100) + "%")
-    return sum(myvideoav.accuracies) / len(myvideoav.accuracies)
+
+    if consts.ACCURACY:
+        print("final_accuracy:" + str((sum(myvideoav.accuracies) / len(myvideoav.accuracies))*100) + "%")
+        return sum(myvideoav.accuracies) / len(myvideoav.accuracies)
 
 def change_detect_interval(filepath,mvs,interval):
     myvideoav = MyVideoAV(filepath)
@@ -184,8 +194,17 @@ if __name__ == '__main__':
     elif args[1] == "di": # detect only i
         detect_only_i(file_path)
     else: #動きベクトルを使う方
-        csv_file_name = "mv_csv/" + file_name + ".csv"
-        mvs = read_csv.read_csv(csv_file_name)
+        if consts.VECTOR_DIR:
+            np_array_file_name ='numpy_array/' + consts.FILE_NAME + "vector.npy"
+        else:
+            np_array_file_name ='numpy_array/' + consts.FILE_NAME + ".npy"
+
+        if os.path.exists(np_array_file_name):
+            mvs = np.load(file=np_array_file_name).tolist()
+        else:
+            csv_file_name = "mv_csv/" + file_name + ".csv"
+            mvs = read_csv.read_csv(csv_file_name)
+
         if args[1] == "i":
             detect_object_from_key_frame(file_path,mvs)
         elif args[1] == "show_mv":

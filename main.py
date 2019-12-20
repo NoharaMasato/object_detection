@@ -109,6 +109,28 @@ def detect_object_from_all_frame(file_path):
     myvideo.finish_play()
     print("final_accuracy:" + str((sum(myvideo.accuracies) / len(myvideo.accuracies))*100) + "%")
 
+def detect_only_i(filepath):
+    myvideoav = MyVideoAV(filepath)
+    cnt=0
+    for idx, frame in enumerate(myvideoav.video.decode(video=0)):
+        cnt+=1
+        is_key_frame = frame.key_frame
+
+        frame = frame.to_ndarray(format='bgr24')
+        myframe = MyFrame(frame,is_key_frame,cnt)
+        if cnt == 1:
+            myvideoav.init_meta_data(myframe.data)
+        myvideoav.frames.append(myframe)
+        #ここで、key_frameとそれ以外に分けて、物体検知をしたポインタを返したい
+        if myframe.key_frame: 
+            myvideoav.reset_objects()
+            pts, display_txts = ssd_model_opencv.detect_from_ssd(myframe.data,myframe.cnt)
+            for pt, display_txt in zip(pts, display_txts):
+                myobject = MyObject(pt,display_txt,(0,0,255))
+                myvideoav.add_object(myobject)
+        # 動画を表示する(frameにobjectsも書き込んでくれる)
+        myvideoav.forward_frame(save = consts.SAVE,play = consts.PLAY)
+
 def show_motion_vector(file_path,mvs):
     myvideo = MyVideoNormal(file_path)
     cnt=0
@@ -145,21 +167,26 @@ if __name__ == '__main__':
     args = sys.argv
     start = time.time()
 
-    if len(args) != 2:
+    if len(args) < 2:
         print("引数にi or all or show_mv or play を入れてください")
         exit(1)
 
     file_name = consts.FILE_NAME
     file_path = "sample_videos/" + file_name + ".mp4"
 
+    if len(args) ==  3:
+        file_path = args[2]
+
     if args[1] == "all":
         detect_object_from_all_frame(file_path)
     elif args[1] == "play":
         just_play(file_path)
+    elif args[1] == "di": # detect only i
+        detect_only_i(file_path)
     else: #動きベクトルを使う方
         csv_file_name = "mv_csv/" + file_name + ".csv"
         mvs = read_csv.read_csv(csv_file_name)
-        elif args[1] == "i":
+        if args[1] == "i":
             detect_object_from_key_frame(file_path,mvs)
         elif args[1] == "show_mv":
             show_motion_vector(file_path,mvs)

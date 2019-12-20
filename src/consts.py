@@ -18,6 +18,7 @@ FILE_NAME = "dog_out"
 #FILE_NAME = "car"
 #FILE_NAME = "kanshi"
 #FILE_NAME = "kanshi2"
+#FILE_NAME = "kanshi3"
 #FILE_NAME = "walk"
 #FILE_NAME = "walk1"
 
@@ -58,6 +59,13 @@ elif FILE_NAME == "kanshi":
 
 elif FILE_NAME == "kanshi2":
     FRAME_NUM = 901
+    FRAME_WIDTH = 100
+    FRAME_HEIGHT = 50
+    GRAD_FRAME = 15
+    LITERAL_SIZE = 1
+
+elif FILE_NAME == "kanshi3":
+    FRAME_NUM = 764
     FRAME_WIDTH = 100
     FRAME_HEIGHT = 50
     GRAD_FRAME = 15

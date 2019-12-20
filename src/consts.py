@@ -9,7 +9,7 @@ if SSD + YOLO != 1:
     exit(0)
 
 DRAW_MV = 0
-VECTOR_DIR = 1
+VECTOR_DIR = 0 # ベクトルの方向を使うかどうか
 ACCURACY = 0 #精度を求めるか(現在は犬の動画しかground truthを取っていないためその他の動画では不可能)
 if ACCURACY == 1:
     ACCURACY_PRINT = 0 #精度を毎回表示するか
@@ -19,13 +19,16 @@ MV_THREASH = 0.3 #mvの大きさのスレッシュホールド
 
 CONSIDER_OVERLAPPED = 1 #objectが重なっている時(ある一定以上近い時)にもう一度物体認識にかけるかどうか
 
+
 #FILE_NAME = "vtest"
 FILE_NAME = "dog_out"
 #FILE_NAME = "bike"
 #FILE_NAME = "car"
 #FILE_NAME = "kanshi"
 #FILE_NAME = "kanshi2"
+#FILE_NAME = "kanshi3"
 #FILE_NAME = "walk"
+#FILE_NAME = "walk1"
 
 if FILE_NAME == "vtest":
     FRAME_NUM = 800 #frame数+1にする
@@ -60,10 +63,17 @@ elif FILE_NAME == "kanshi":
     FRAME_WIDTH = 100
     FRAME_HEIGHT = 50
     GRAD_FRAME = 15
-    LITERAL_SIZE = 1
+    LITERAL_SIZE = 0.5
 
 elif FILE_NAME == "kanshi2":
     FRAME_NUM = 901
+    FRAME_WIDTH = 100
+    FRAME_HEIGHT = 50
+    GRAD_FRAME = 15
+    LITERAL_SIZE = 1
+
+elif FILE_NAME == "kanshi3":
+    FRAME_NUM = 764
     FRAME_WIDTH = 100
     FRAME_HEIGHT = 50
     GRAD_FRAME = 15
@@ -73,6 +83,13 @@ elif FILE_NAME == "walk":
     FRAME_NUM = 413
     FRAME_WIDTH = 100
     FRAME_HEIGHT = 100
+    GRAD_FRAME = 15
+    LITERAL_SIZE = 1
+
+elif FILE_NAME == "walk1":
+    FRAME_NUM = 675
+    FRAME_WIDTH = 250
+    FRAME_HEIGHT = 150
     GRAD_FRAME = 15
     LITERAL_SIZE = 1
 

@@ -153,3 +153,24 @@ class MyObject:
         distance = ((self.pt[0]+self.pt[2])/2 - (myobject.pt[0]+myobject.pt[2])/2)**2 + ((self.pt[1]+self.pt[3])/2 - (myobject.pt[1]+myobject.pt[3])/2)**2 
         return distance
 
+    def caliculate_vector(self,frame,mvs):
+        cnt = 0
+        cntm = 0
+        ave_vector = [0,0]
+        for y in range(int(self.pt[1]//8),int(self.pt[3]//8)):
+            for x in range(int(self.pt[0]//8),int(self.pt[2]//8)):
+                cnt += 1
+                mv = mvs[y][x]
+                if mv != [0.0,0.0,0.0,0.0,0.0]:
+                    ave_vector[0] += mv[2] - mv[0]
+                    ave_vector[1] += mv[3] - mv[1]
+                    cntm += 1
+
+        ave_vector[0] /= cnt
+        ave_vector[1] /= cnt
+
+        if cntm / cnt <= 0.5:
+            ave_vector[0] = 0
+            ave_vector[1] = 0
+        return ave_vector
+

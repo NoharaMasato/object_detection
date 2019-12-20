@@ -19,6 +19,7 @@ FILE_NAME = "dog_out"
 #FILE_NAME = "kanshi"
 #FILE_NAME = "kanshi2"
 #FILE_NAME = "walk"
+#FILE_NAME = "walk1"
 
 if FILE_NAME == "vtest":
     FRAME_NUM = 800 #frame数+1にする
@@ -66,6 +67,13 @@ elif FILE_NAME == "walk":
     FRAME_NUM = 413
     FRAME_WIDTH = 100
     FRAME_HEIGHT = 100
+    GRAD_FRAME = 15
+    LITERAL_SIZE = 1
+
+elif FILE_NAME == "walk1":
+    FRAME_NUM = 675
+    FRAME_WIDTH = 250
+    FRAME_HEIGHT = 150
     GRAD_FRAME = 15
     LITERAL_SIZE = 1
 

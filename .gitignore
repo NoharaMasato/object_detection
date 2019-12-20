@@ -1,6 +1,7 @@
 output_videos/*.mp4
 __pycache__
-weights/*.pth
+weights/*
+!weights/.keep
 numpy_array/*.npy
 sample_videos/*.mp4
 .DS_Store

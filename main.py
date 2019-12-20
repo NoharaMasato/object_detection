@@ -121,7 +121,8 @@ def show_motion_vector(file_path,mvs):
             myvideo.init_meta_data(myframe.data)
         if myframe == 0:
             break
-        myframe.save_frame(myvideo)
+        if consts.SAVE:
+            myframe.save_frame(myvideo)
         myframe.embed_mv()
         myframe.display_frame()
 
@@ -153,43 +154,42 @@ if __name__ == '__main__':
 
     if args[1] == "all":
         detect_object_from_all_frame(file_path)
-    elif args[1] == "i":
-        csv_file_name = "mv_csv/" + file_name + ".csv"
-        mvs = read_csv.read_csv(csv_file_name)
-        detect_object_from_key_frame(file_path,mvs)
-    elif args[1] == "show_mv":
-        show_motion_vector(file_path,mvs)
     elif args[1] == "play":
         just_play(file_path)
-    elif args[1] == "inter":
+    else: #動きベクトルを使う方
         csv_file_name = "mv_csv/" + file_name + ".csv"
         mvs = read_csv.read_csv(csv_file_name)
+        elif args[1] == "i":
+            detect_object_from_key_frame(file_path,mvs)
+        elif args[1] == "show_mv":
+            show_motion_vector(file_path,mvs)
+        elif args[1] == "inter":
+            elapsed_times = []
+            accuracies = []
+            for i in consts.I_INTER_VALS:
+                start_inter = time.time()
+                accuracies.append(change_detect_interval(file_path,mvs,i))
+                elapsed_time = time.time() - start_inter
+                elapsed_times.append(elapsed_time)
+                print ("かかった時間:{0}".format(elapsed_time) + "[sec]:"+ str(i) + "枚ごとに検出,最終的な精度:" + str(accuracies[-1]) + "%")
 
-        elapsed_times = []
-        accuracies = []
-        for i in consts.I_INTER_VALS:
+            for x,y,k in zip(elapsed_times,accuracies,consts.I_INTER_VALS):
+                plt.plot(x,y,'o')
+                plt.annotate(round(300/k,1), xy=(x,y))
+
             start_inter = time.time()
-            accuracies.append(change_detect_interval(file_path,mvs,i))
-            elapsed_time = time.time() - start_inter
-            elapsed_times.append(elapsed_time)
-            print ("かかった時間:{0}".format(elapsed_time) + "[sec]:"+ str(i) + "枚ごとに検出,最終的な精度:" + str(accuracies[-1]) + "%")
-
-        for x,y,k in zip(elapsed_times,accuracies,consts.I_INTER_VALS):
+            y = detect_object_from_key_frame(file_path,mvs) #Iフレームのみの回
+            x = time.time() - start_inter
             plt.plot(x,y,'o')
-            plt.annotate(round(300/k,1), xy=(x,y))
+            plt.annotate("I", xy=(x,y))
 
-        start_inter = time.time()
-        y = detect_object_from_key_frame(file_path,mvs) #Iフレームのみの回
-        x = time.time() - start_inter
-        plt.plot(x,y,'o')
-        plt.annotate("I", xy=(x,y))
+            plt.xlabel('time [s]')
+            plt.ylabel('accuracy [%]')
+            plt.show()
+        else:
+            print("引数にi or all or show_mv or play を入れてください")
+            exit(1)
 
-        plt.xlabel('time [s]')
-        plt.ylabel('accuracy [%]')
-        plt.show()
-    else:
-        print("引数にi or all or show_mv or play を入れてください")
-        exit(1)
     elapsed_time = time.time() - start
     print ("かかった時間:{0}".format(elapsed_time) + "[sec]")
 

@@ -56,7 +56,7 @@ class MyVideo:
         root = ET.fromstring(xml_data)
         pt = [0,0,0,0]
         if len(self.objects) > 0:
-            pt = self.objects[0].pt
+            pt = self.objects[-1].pt
         groud_truth = [int(root[6][4][i].text) for i in range(4)]
         IoU = accuracy.bb_iou(pt,groud_truth)
         self.accuracies.append(IoU)

@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import sys
 
 sys.path.append('src')
+sys.path.append('yolo')
 import ssd_model_opencv
 import yolo
 import read_csv
@@ -34,7 +35,12 @@ def detect_object_from_key_frame(filepath,mvs):
         #ここで、key_frameとそれ以外に分けて、物体検知をしたポインタを返したい
         if myframe.key_frame or (consts.CONSIDER_OVERLAPPED and myvideoav.is_objects_overlaped()): #物体がかぶっている時ももう一度ssdにかける
             myvideoav.reset_objects()
-            pts, display_txts = ssd_model_opencv.detect_from_ssd(myframe.data,myframe.cnt)
+
+            if consts.SSD:
+                pts, display_txts = ssd_model_opencv.detect_from_ssd(myframe.data,cnt)
+            if consts.YOLO:
+                pts, display_txts = yolo.detect_from_yolo(myframe.data,cnt)
+
             for pt, display_txt in zip(pts, display_txts):
                 myobject = MyObject(pt,display_txt,(0,0,255))
                 myvideoav.add_object(myobject)
@@ -78,7 +84,12 @@ def change_detect_interval(filepath,mvs,interval):
         #ここで、key_frameとそれ以外に分けて、物体検知をしたポインタを返したい
         if (cnt-1)%interval == 0:
             myvideoav.reset_objects()
-            pts, display_txts = ssd_model_opencv.detect_from_ssd(myframe.data,myframe.cnt)
+
+            if consts.SSD:
+                pts, display_txts = ssd_model_opencv.detect_from_ssd(myframe.data,cnt)
+            if consts.YOLO:
+                pts, display_txts = yolo.detect_from_yolo(myframe.data,cnt)
+
             for pt, display_txt in zip(pts, display_txts):
                 myobject = MyObject(pt,display_txt,(0,0,255))
                 myvideoav.add_object(myobject)
@@ -121,7 +132,8 @@ def detect_object_from_all_frame(file_path):
         myvideo.forward_frame(save = consts.SAVE,play = consts.PLAY)
 
     myvideo.finish_play()
-    print("final_accuracy:" + str((sum(myvideo.accuracies) / len(myvideo.accuracies))*100) + "%")
+    if consts.ACCURACY:
+        print("final_accuracy:" + str((sum(myvideo.accuracies) / len(myvideo.accuracies))*100) + "%")
 
 def detect_only_i(filepath):
     myvideoav = MyVideoAV(filepath)

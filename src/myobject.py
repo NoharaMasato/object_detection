@@ -59,7 +59,14 @@ class MyVideo:
             pt = self.objects[-1].pt
         groud_truth = [int(root[6][4][i].text) for i in range(4)]
         IoU = accuracy.bb_iou(pt,groud_truth)
-        self.accuracies.append(IoU)
+        if consts.USE_mAP50:
+            if IoU >= 0.5:
+                self.accuracies.append(1)
+            else:
+                self.accuracies.append(0)
+        else:
+            self.accuracies.append(IoU)
+
 
     def is_objects_overlaped(self):
         myobjects = self.objects

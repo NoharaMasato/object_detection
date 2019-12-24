@@ -9,6 +9,7 @@ frame_height = consts.FRAME_HEIGHT
 
 numpy_array_file_name = 'numpy_array/' + consts.FILE_NAME + ".npy"
 numpy_array_vector_file_name = 'numpy_array/' + consts.FILE_NAME + "vector.npy"
+numpy_array_row_vector_file_name = 'numpy_array/' + consts.FILE_NAME + "row_vector.npy"
 
 # motion vectorの大きさのみを平均化する
 def ave_mvs(frame_mvs):
@@ -88,6 +89,32 @@ def read_csv(csv_file_path):
     print("finish caliculating average")
     return frame_mvs
 
-if __name__ == '__main__':
-    read_csv("mv_csv/car.csv")
+def read_row_mv_from_csv(csv_file_path):
+    frame_mvs = [[[[0,0,0,0,0] for x in range(frame_width)] for y in range(frame_height)] for k in range(frame_num)] #大きさの平均
+
+    with open(csv_file_path) as csv_file:
+        csv_reader = csv.reader(csv_file, delimiter=',')
+        line_count = 0
+        for row in csv_reader:
+            if line_count == 0:
+                print(f'Column names are {", ".join(row)}')
+                line_count += 1
+            else:
+                frame_cnt= int(row[0].split()[-1])
+                row.pop(0)
+                x = int(int(row[3])/8)
+                y = int(int(row[4])/8)
+
+                for i in range(7):
+                    row[i] = int(row[i])
+
+                for i in range(4):
+                    frame_mvs[frame_cnt][y][x][i] = row[i+3]
+
+                line_count += 1
+        print(f'Processed {line_count} lines.')
+
+    if not os.path.exists(numpy_array_row_vector_file_name):
+        np.save(numpy_array_row_vector_file_name, np.array(frame_mvs))
+    return frame_mvs
 

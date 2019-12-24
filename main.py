@@ -17,16 +17,20 @@ from myobject import *
 import consts
 
 
-def detect_object_from_key_frame(filepath,mvs):
+def detect_object_from_key_frame(filepath,mvs = [],row_mvs = []):
     myvideoav = MyVideoAV(filepath)
     cnt=0
     former_pts = []
 
     for idx, frame in enumerate(myvideoav.video.decode(video=0)):
         cnt+=1
+        print(cnt)
         is_key_frame = frame.key_frame
         frame = frame.to_ndarray(format='bgr24')
-        myframe = MyFrame(frame,is_key_frame,cnt,mvs[cnt])
+        if consts.USE_ROW_MV:
+            myframe = MyFrame(frame,is_key_frame,cnt,mvs[cnt],row_mvs[cnt])
+        else:
+            myframe = MyFrame(frame,is_key_frame,cnt,mvs[cnt])
 
         if cnt == 1:
             myvideoav.init_meta_data(myframe.data)
@@ -34,7 +38,7 @@ def detect_object_from_key_frame(filepath,mvs):
         myvideoav.frames.append(myframe)
         #ここで、key_frameとそれ以外に分けて、物体検知をしたポインタを返したい
         if myframe.key_frame or (consts.CONSIDER_OVERLAPPED and myvideoav.is_objects_overlaped()): #物体がかぶっている時ももう一度ssdにかける
-            myvideoav.reset_objects()
+            before_objects = myvideoav.reset_objects()
 
             if consts.SSD:
                 pts, display_txts = ssd_model_opencv.detect_from_ssd(myframe.data,cnt)
@@ -47,9 +51,12 @@ def detect_object_from_key_frame(filepath,mvs):
         else:
             if consts.VECTOR_DIR:
                 for myobject in myvideoav.objects:
-                    vector = myobject.caliculate_vector(myframe.data,myframe.mvs)
-                    print(vector,myobject.text)
-                    next_pt = [myobject.pt[i] + vector[i%2]*7 for i in range(4)]
+                    if consts.USE_ROW_MV:
+                        vector = myobject.caliculate_vector(myframe.data,myframe.row_mvs)
+                    else:
+                        vector = myobject.caliculate_vector(myframe.data,myframe.row_mvs)
+                    #print(vector,myobject.text)
+                    next_pt = [myobject.pt[i] + vector[i%2]*10 for i in range(4)] #ある定数をかけて、動かす
                     myobject.move(next_pt) #objectを動かす
                     myobject.color = (255,0,0)
             else:
@@ -210,6 +217,7 @@ if __name__ == '__main__':
     elif args[1] == "di": # detect only i
         detect_only_i(file_path)
     else: #動きベクトルを使う方
+        csv_file_name = "mv_csv/" + file_name + ".csv"
         if consts.VECTOR_DIR:
             np_array_file_name ='numpy_array/' + consts.FILE_NAME + "vector.npy"
         else:
@@ -218,11 +226,19 @@ if __name__ == '__main__':
         if os.path.exists(np_array_file_name):
             mvs = np.load(file=np_array_file_name).tolist()
         else:
-            csv_file_name = "mv_csv/" + file_name + ".csv"
             mvs = read_csv.read_csv(csv_file_name)
 
+        row_mvs = []
+        if consts.USE_ROW_MV:
+            row_np_file_name = 'numpy_array/' + consts.FILE_NAME + "row_vector.npy"
+            #if os.path.exists(row_np_file_name):
+            #    row_mvs = np.load(file=row_np_file_name).tolist()
+            #else:
+            #    row_mvs = read_csv.read_row_mv_from_csv(csv_file_name)
+            row_mvs = read_csv.read_row_mv_from_csv(csv_file_name)
+
         if args[1] == "i":
-            detect_object_from_key_frame(file_path,mvs)
+            detect_object_from_key_frame(file_path,mvs,row_mvs)
         elif args[1] == "show_mv":
             show_motion_vector(file_path,mvs)
         elif args[1] == "inter":

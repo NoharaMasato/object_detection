@@ -12,7 +12,9 @@ class MyVideo:
         self.objects = []
 
     def reset_objects(self):
+        before_objects = self.objects
         self.objects = []
+        return before_objects
     
     def read_frame(self,cnt,mvs = []):
         ret,frame = self.cap.read()
@@ -103,12 +105,12 @@ class MyVideoAV(MyVideo):
 
 
 class MyFrame:
-    def __init__(self,frame,key_frame,cnt,mvs = []):
+    def __init__(self,frame,key_frame,cnt,mvs = [],row_mvs = []):
         self.cnt = cnt
         self.data = frame
         self.key_frame = key_frame
         self.mvs = mvs
-        
+        self.row_mvs = row_mvs
 
     def delete_object(self):
         self.objects.delete() #objectのnameとpercentで絞って、削除をする

@@ -2,64 +2,21 @@ import csv
 import numpy as np
 import os
 import consts
+import vector_filter
 
 frame_num = consts.FRAME_NUM
 frame_width = consts.FRAME_WIDTH
 frame_height = consts.FRAME_HEIGHT
 
-numpy_array_file_name = 'numpy_array/' + consts.FILE_NAME + ".npy"
-numpy_array_vector_file_name = 'numpy_array/' + consts.FILE_NAME + "vector.npy"
-numpy_array_row_vector_file_name = 'numpy_array/' + consts.FILE_NAME + "row_vector.npy"
+filtered_numpy_file_name = 'numpy_array/' + consts.FILE_NAME + consts.FILTER + ".npy" #filterとファイル名でnumpy arrayを保存する
 
-# motion vectorの大きさのみを平均化する
-def ave_mvs(frame_mvs):
-    frame_mvs_ave_len= [[[0 for x in range(frame_width)] for y in range(frame_height)] for k in range(frame_num)] #大きさの平均
-    frame_mvs_ave_cnt = [[[0 for x in range(frame_width)] for y in range(frame_height)] for k in range(frame_num)] #個数の平均
-    for i in range(frame_num):
-        print("frame_number:"+str(i))
-        for y in range(frame_height):
-            for x in range(frame_width):
-                mv_len_sum = 0
-                mv_cnt_sum = 0
-                for yi in [-2,-1,0,1,2]:
-                    for xi in [-2,-1,0,1,2]:
-                        if y+yi >= 0 and y+yi < frame_height and x+xi >= 0 and x+xi < frame_width:
-                            mv_cnt_sum += len(frame_mvs[i][y+yi][x+xi])
-                            for mv in frame_mvs[i][y+yi][x+xi]:
-                                mv_len_sum += ((mv[3]-mv[5])**2 + (mv[4]-mv[5])**2)
-                frame_mvs_ave_cnt[i][y][x] = mv_cnt_sum / 9
-                frame_mvs_ave_len[i][y][x] = mv_len_sum / 9
-    np.save(numpy_array_file_name, np.array(frame_mvs_ave_cnt))
-    return frame_mvs_ave_cnt
-
-#向きを考慮した平均化をする
-def ave_vector_dir(frame_mvs):
-    # frame_mvs_ave_vector[i][y][x] i番目のフレームのy,x座標のmotion vector(大きさ、sx,sy,yx,yy)の順で入っている
-    frame_mvs_ave_vector = [[[[0,0,0,0,0] for x in range(frame_width)] for y in range(frame_height)] for k in range(frame_num)] #大きさの平均
-    for i in range(frame_num):
-        print("frame_number:"+str(i))
-        for y in range(frame_height):
-            for x in range(frame_width):
-                ave_row = [0,0,0,0,0]
-                for yi in [-2,-1,0,1,2]:
-                    for xi in [-2,-1,0,1,2]:
-                        if y+yi >= 0 and y+yi < frame_height and x+xi >= 0 and x+xi < frame_width:
-                            for mv in frame_mvs[i][y+yi][x+xi]:
-                                for j in range(4):
-                                    ave_row[j] += mv[j+3]
-                                ave_row[4] += ((mv[3]-mv[5])**2 + (mv[4]-mv[6])**2)
-                for j in range(5):
-                    #print(i,y,x,j)
-                    frame_mvs_ave_vector[i][y][x][j] = ave_row[j] / 25
-
-    np.save(numpy_array_vector_file_name, np.array(frame_mvs_ave_vector))
-    return frame_mvs_ave_vector
-
-def read_csv(csv_file_path):
-    mvs = [[] for i in range(frame_num)] # mv[i][j][k] #i: frameの番号, j: i番目のフレームのj番目のmv, k: mvの属性
-
-    frame_mvs= [[[[] for x in range(frame_width)] for y in range(frame_height)] for k in range(frame_num)] #frame_mvs[i][y][x][t] i : frame番号, x,yはフレームの座標(8x8), t: マクロブロックの中のmotion vector
-
+##############vectorを読み込む方針######################
+# 1. 8x8単位のmacroblockで読み込む
+# 2. 一つのmacroblockに複数のmvがある場合があるが、その場合は一つのvectorに合成する
+# 3. sourceが１の場合はsourceとdestinationを逆にする
+#################################### 
+def parse_mv_from_csv(csv_file_path):
+    row_mvs = [[[[0,0,0,0] for x in range(frame_width)] for y in range(frame_height)] for k in range(frame_num)] #大きさの平均
     with open(csv_file_path) as csv_file:
         csv_reader = csv.reader(csv_file, delimiter=',')
         line_count = 0
@@ -70,51 +27,40 @@ def read_csv(csv_file_path):
             else:
                 frame_cnt= int(row[0].split()[-1])
                 row.pop(0)
-                x = int(int(row[3])/8)
-                y = int(int(row[4])/8)
+                x = int(row[3])//8
+                y = int(row[4])//8
 
                 for i in range(7):
                     row[i] = int(row[i])
 
-                frame_mvs[frame_cnt][y][x].append(row)
+                if row[1] == 1: #sourceが逆のものはひっくり返しておく
+                    row[3],row[5] = row[5],row[3]
+                    row[4],row[6] = row[6],row[4]
+                    
+                if row_mvs[frame_cnt][y][x] == [0,0,0,0]:
+                    for i in range(4):
+                        row_mvs[frame_cnt][y][x][i] = row[i+3]
+                else:
+                    row_mvs[frame_cnt][y][x][2] += (row[5] - row[3])
+                    row_mvs[frame_cnt][y][x][3] += (row[6] - row[4])
 
-                mvs[frame_cnt].append(row)
                 line_count += 1
         print(f'Processed {line_count} lines.')
+    return row_mvs
 
-    if consts.VECTOR_DIR:
-        frame_mvs = ave_vector_dir(frame_mvs)
+def read_filtered_mv_from_csv(csv_file_path):
+    if os.path.exists(filtered_numpy_file_name):#もうある場合はここで読み込む:
+        mvs = np.load(file=filtered_numpy_file_name).tolist()
     else:
-        frame_mvs = ave_mvs(frame_mvs)
-    print("finish caliculating average")
-    return frame_mvs
+        mvs = parse_mv_from_csv(csv_file_path)
+        if consts.FILTER == "MEDIAN":
+            mvs = vector_filter.vector_median_filter(mvs)
+        elif consts.FILTER == "TF":
+            mvs = vector_filter.temporal_median_fiter(mvs)
+        print("finish filtering motion vectors")
+        np.save(filtered_numpy_file_name, np.array(mvs))
+    return mvs
 
-def read_row_mv_from_csv(csv_file_path):
-    frame_mvs = [[[[0,0,0,0,0] for x in range(frame_width)] for y in range(frame_height)] for k in range(frame_num)] #大きさの平均
-
-    with open(csv_file_path) as csv_file:
-        csv_reader = csv.reader(csv_file, delimiter=',')
-        line_count = 0
-        for row in csv_reader:
-            if line_count == 0:
-                print(f'Column names are {", ".join(row)}')
-                line_count += 1
-            else:
-                frame_cnt= int(row[0].split()[-1])
-                row.pop(0)
-                x = int(int(row[3])/8)
-                y = int(int(row[4])/8)
-
-                for i in range(7):
-                    row[i] = int(row[i])
-
-                for i in range(4):
-                    frame_mvs[frame_cnt][y][x][i] = row[i+3]
-
-                line_count += 1
-        print(f'Processed {line_count} lines.')
-
-    if not os.path.exists(numpy_array_row_vector_file_name):
-        np.save(numpy_array_row_vector_file_name, np.array(frame_mvs))
-    return frame_mvs
+if __name__ == '__main__':
+     read_filtered_mv_from_csv("mv_csv/walk.csv")
 

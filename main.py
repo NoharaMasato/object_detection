@@ -17,21 +17,14 @@ from myobject import *
 import consts
 
 
-def detect_object_from_key_frame(filepath,mvs = [],row_mvs = []):
+def detect_object_from_key_frame(filepath,mvs):
     myvideoav = MyVideoAV(filepath)
     cnt=0
     former_pts = []
 
     for idx, frame in enumerate(myvideoav.video.decode(video=0)):
+        myframe = MyFrame(frame.to_ndarray(format='bgr24'), frame.key_frame, cnt, mvs[cnt])
         cnt+=1
-        print(cnt)
-        is_key_frame = frame.key_frame
-        frame = frame.to_ndarray(format='bgr24')
-        if consts.USE_ROW_MV:
-            myframe = MyFrame(frame,is_key_frame,cnt,mvs[cnt],row_mvs[cnt])
-        else:
-            myframe = MyFrame(frame,is_key_frame,cnt,mvs[cnt])
-
         if cnt == 1:
             myvideoav.init_meta_data(myframe.data)
 
@@ -51,11 +44,7 @@ def detect_object_from_key_frame(filepath,mvs = [],row_mvs = []):
         else:
             if consts.VECTOR_DIR:
                 for myobject in myvideoav.objects:
-                    if consts.USE_ROW_MV:
-                        vector = myobject.caliculate_vector(myframe.data,myframe.row_mvs)
-                    else:
-                        vector = myobject.caliculate_vector(myframe.data,myframe.row_mvs)
-                    #print(vector,myobject.text)
+                    vector = myobject.caliculate_vector(myframe.data,myframe.mvs)
                     next_pt = [myobject.pt[i] + vector[i%2]*10 for i in range(4)] #ある定数をかけて、動かす
                     myobject.move(next_pt) #objectを動かす
                     myobject.color = (255,0,0)
@@ -80,9 +69,7 @@ def change_detect_interval(filepath,mvs,interval):
     former_pts = []
     for idx, frame in enumerate(myvideoav.video.decode(video=0)):
         cnt+=1
-        is_key_frame = frame.key_frame
-        frame = frame.to_ndarray(format='bgr24')
-        myframe = MyFrame(frame,is_key_frame,cnt,mvs[cnt])
+        myframe = MyFrame(frame.to_ndarray(format='bgr24'), frame.key_frame, cnt, mvs[cnt])
 
         if cnt == 1:
             myvideoav.init_meta_data(myframe.data)
@@ -101,12 +88,19 @@ def change_detect_interval(filepath,mvs,interval):
                 myobject = MyObject(pt,display_txt,(0,0,255))
                 myvideoav.add_object(myobject)
         else:
-            pts_tmp = ssd_model_opencv.detect_from_mv(myframe.data,myframe.cnt,myframe.mvs)
-            for myobject in myvideoav.objects:
-                if (len(pts_tmp) != 0):
-                    next_pt = myvideoav.select_nearest_pt(pts_tmp,myobject)
+            if consts.VECTOR_DIR:
+                for myobject in myvideoav.objects:
+                    vector = myobject.caliculate_vector(myframe.data,myframe.mvs)
+                    next_pt = [myobject.pt[i] + vector[i%2]*10 for i in range(4)] #ある定数をかけて、動かす
                     myobject.move(next_pt) #objectを動かす
                     myobject.color = (255,0,0)
+            else:
+                pts_tmp = ssd_model_opencv.detect_from_mv(myframe.data,myframe.cnt,myframe.mvs)
+                for myobject in myvideoav.objects:
+                    if (len(pts_tmp) != 0):
+                        next_pt = myvideoav.select_nearest_pt(pts_tmp,myobject)
+                        myobject.move(next_pt) #objectを動かす
+                        myobject.color = (255,0,0)
 
         # 動画を表示する(frameにobjectsも書き込んでくれる)
         myvideoav.forward_frame(save = consts.SAVE,play = consts.PLAY)
@@ -147,21 +141,24 @@ def detect_only_i(filepath):
     cnt=0
     for idx, frame in enumerate(myvideoav.video.decode(video=0)):
         cnt+=1
-        is_key_frame = frame.key_frame
+        myframe = MyFrame(frame.to_ndarray(format='bgr24'), frame.key_frame, cnt)
 
-        frame = frame.to_ndarray(format='bgr24')
-        myframe = MyFrame(frame,is_key_frame,cnt)
         if cnt == 1:
             myvideoav.init_meta_data(myframe.data)
+
         myvideoav.frames.append(myframe)
-        #ここで、key_frameとそれ以外に分けて、物体検知をしたポインタを返したい
+
         if myframe.key_frame: 
             myvideoav.reset_objects()
-            pts, display_txts = ssd_model_opencv.detect_from_ssd(myframe.data,myframe.cnt)
+
+            if consts.SSD:
+                pts, display_txts = ssd_model_opencv.detect_from_ssd(myframe.data,cnt)
+            if consts.YOLO:
+                pts, display_txts = yolo.detect_from_yolo(myframe.data,cnt)
+
             for pt, display_txt in zip(pts, display_txts):
                 myobject = MyObject(pt,display_txt,(0,0,255))
                 myvideoav.add_object(myobject)
-        # 動画を表示する(frameにobjectsも書き込んでくれる)
         myvideoav.forward_frame(save = consts.SAVE,play = consts.PLAY)
 
 def show_motion_vector(file_path,mvs):
@@ -169,16 +166,15 @@ def show_motion_vector(file_path,mvs):
     cnt=0
 
     while(myvideo.cap.isOpened()):
-        cnt+=1
-
         myframe = myvideo.read_frame(cnt,mvs[cnt])
+        cnt+=1
         if cnt == 1:
             myvideo.init_meta_data(myframe.data)
         if myframe == 0:
             break
+        myframe.embed_mv()
         if consts.SAVE:
             myframe.save_frame(myvideo)
-        myframe.embed_mv()
         myframe.display_frame()
 
     myvideo.finish_play()
@@ -200,15 +196,10 @@ if __name__ == '__main__':
     args = sys.argv
     start = time.time()
 
-    if len(args) < 2:
+    if len(args) != 2:
         print("引数にi or all or show_mv or play を入れてください")
         exit(1)
-
-    file_name = consts.FILE_NAME
-    file_path = "sample_videos/" + file_name + ".mp4"
-
-    if len(args) ==  3:
-        file_path = args[2]
+    file_path = "sample_videos/" +  consts.FILE_NAME + ".mp4"
 
     if args[1] == "all":
         detect_object_from_all_frame(file_path)
@@ -217,28 +208,11 @@ if __name__ == '__main__':
     elif args[1] == "di": # detect only i
         detect_only_i(file_path)
     else: #動きベクトルを使う方
-        csv_file_name = "mv_csv/" + file_name + ".csv"
-        if consts.VECTOR_DIR:
-            np_array_file_name ='numpy_array/' + consts.FILE_NAME + "vector.npy"
-        else:
-            np_array_file_name ='numpy_array/' + consts.FILE_NAME + ".npy"
-
-        if os.path.exists(np_array_file_name):
-            mvs = np.load(file=np_array_file_name).tolist()
-        else:
-            mvs = read_csv.read_csv(csv_file_name)
-
-        row_mvs = []
-        if consts.USE_ROW_MV:
-            row_np_file_name = 'numpy_array/' + consts.FILE_NAME + "row_vector.npy"
-            #if os.path.exists(row_np_file_name):
-            #    row_mvs = np.load(file=row_np_file_name).tolist()
-            #else:
-            #    row_mvs = read_csv.read_row_mv_from_csv(csv_file_name)
-            row_mvs = read_csv.read_row_mv_from_csv(csv_file_name)
+        csv_file_name = "mv_csv/" + consts.FILE_NAME + ".csv"
+        mvs = read_csv.read_filtered_mv_from_csv(csv_file_name)
 
         if args[1] == "i":
-            detect_object_from_key_frame(file_path,mvs,row_mvs)
+            detect_object_from_key_frame(file_path,mvs)
         elif args[1] == "show_mv":
             show_motion_vector(file_path,mvs)
         elif args[1] == "inter":
@@ -253,7 +227,7 @@ if __name__ == '__main__':
 
             for x,y,k in zip(elapsed_times,accuracies,consts.I_INTER_VALS):
                 plt.plot(x,y,'o')
-                plt.annotate(round(300/k,1), xy=(x,y))
+                #plt.annotate(round(300/k,1), xy=(x,y)) #plotにラベル付けをするかどうか
 
             start_inter = time.time()
             y = detect_object_from_key_frame(file_path,mvs) #Iフレームのみの回
@@ -269,5 +243,5 @@ if __name__ == '__main__':
             exit(1)
 
     elapsed_time = time.time() - start
-    print ("かかった時間:{0}".format(elapsed_time) + "[sec]")
+    print ("かかった合計時間:{0}".format(elapsed_time) + "[sec]")
 

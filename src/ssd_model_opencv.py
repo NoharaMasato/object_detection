@@ -13,6 +13,8 @@ import glob
 from ssd import build_ssd
 import read_csv
 import consts
+import sys
+sys.setrecursionlimit(10000)
 
  
 frame_num = read_csv.frame_num
@@ -44,7 +46,7 @@ def dfs(nowx,nowy,mvs):
     for i in range(4):
         nextx = nowx + nx[i]
         nexty = nowy + ny[i]
-        if (nextx>=0 and nexty>=0 and mvs[nowy][nowx] > mv_len_threash and grouping[nexty][nextx] == 0):
+        if (nextx>=0 and nexty>=0 and nextx < frame_width and nexty < frame_height and mvs[nowy][nowx][4] > mv_len_threash and grouping[nexty][nextx] == 0):
             node_cnt+=dfs(nextx,nexty,mvs)
 
     return node_cnt + 1
@@ -52,18 +54,18 @@ def dfs(nowx,nowy,mvs):
 # threashholdより大きいもののみ塗る
 def dfs_draw(nowx,nowy,mvs,frame):
     global grouping_draw,grouping_cnt
-    if mvs[nowy][nowx] > mv_len_threash:
+    if mvs[nowy][nowx][4] > mv_len_threash:
         cv2.rectangle(frame, (nowx*8, nowy*8), ((nowx+1)*8, (nowy+1)*8), color=(255, 0, 0), thickness=-1) # thickness = -1は塗りつぶす
         grouping_draw[nowy][nowx] = grouping_cnt
         for i in range(4):
             nextx = nowx + nx[i]
             nexty = nowy + ny[i]
-            if (nextx>=0 and nexty>=0 and mvs[nowy][nowx] > mv_len_threash and grouping_draw[nexty][nextx] == 0):
+            if (nextx>=0 and nexty>=0 and mvs[nowy][nowx][4] > mv_len_threash and grouping_draw[nexty][nextx] == 0):
                 dfs_draw(nextx,nexty,mvs,frame)
 
 now_dt = []
 def dfs_cnt_pt(nowx,nowy,mvs):
-    if mvs[nowy][nowx] > mv_len_threash:
+    if mvs[nowy][nowx][4] > mv_len_threash:
         global grouping_pt,grouping_cnt
         grouping_pt[nowy][nowx] = grouping_cnt
         global now_dt
@@ -79,7 +81,7 @@ def dfs_cnt_pt(nowx,nowy,mvs):
         for i in range(4):
             nextx = nowx + nx[i]
             nexty = nowy + ny[i]
-            if (nextx>=0 and nexty>=0 and mvs[nowy][nowx] > mv_len_threash and grouping_pt[nexty][nextx] == 0):
+            if (nextx>=0 and nexty>=0 and mvs[nowy][nowx][4] > mv_len_threash and grouping_pt[nexty][nextx] == 0):
                 dfs_cnt_pt(nextx,nexty,mvs)
 
 def detect_from_mv(frame,cnt,mvs):
@@ -97,8 +99,7 @@ def detect_from_mv(frame,cnt,mvs):
     pts = []
     for y in range(frame_height):
         for x in range(frame_width):
-
-            if mvs[y][x] > mv_len_threash and grouping[y][x] == 0:
+            if mvs[y][x][4] > mv_len_threash and grouping[y][x] == 0:
                 cnt = dfs(x,y,mvs)
                 if consts.DRAW_MV:
                     dfs_draw(x,y,mvs,frame) #ここで、mvの色を塗るかどうかを決める

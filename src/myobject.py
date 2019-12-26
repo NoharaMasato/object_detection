@@ -105,12 +105,11 @@ class MyVideoAV(MyVideo):
 
 
 class MyFrame:
-    def __init__(self,frame,key_frame,cnt,mvs = [],row_mvs = []):
+    def __init__(self,frame,key_frame,cnt,mvs = []):
         self.cnt = cnt
         self.data = frame
         self.key_frame = key_frame
         self.mvs = mvs
-        self.row_mvs = row_mvs
 
     def delete_object(self):
         self.objects.delete() #objectのnameとpercentで絞って、削除をする
@@ -127,8 +126,9 @@ class MyFrame:
         for y in range(len(self.mvs)):
             for x in range(len(self.mvs[y])):
                 mv = self.mvs[y][x]
-                if (mv > 0):
-                    cv2.rectangle(self.data, (x*8, y*8), ((x+1)*8, (y+1)*8), color=(0,0,255), thickness=-1)
+                if mv != [0,0,0,0,0]:
+                    print(mv)
+                cv2.arrowedLine(self.data, (mv[0],mv[1]), (mv[2],mv[3]), color=(0,0,255), thickness=1, line_type=cv2.LINE_8, shift=0, tipLength=0.1)
 
     def display_frame(self):
         # 画質が良すぎると、oepncvは描写するのにかなり時間がかかってしまうため、画質を悪くする

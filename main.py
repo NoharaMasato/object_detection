@@ -226,13 +226,12 @@ if __name__ == '__main__':
                 print ("かかった時間:{0}".format(elapsed_time) + "[sec]:"+ str(i) + "枚ごとに検出,最終的な精度:" + str(accuracies[-1]) + "%")
 
             for x,y,k in zip(elapsed_times,accuracies,consts.I_INTER_VALS):
-                plt.plot(x,y,'o')
-                #plt.annotate(round(300/k,1), xy=(x,y)) #plotにラベル付けをするかどうか
+                plt.plot(x,y,'o',color='blue')
 
             start_inter = time.time()
             y = detect_object_from_key_frame(file_path,mvs) #Iフレームのみの回
             x = time.time() - start_inter
-            plt.plot(x,y,'o')
+            plt.plot(x,y,'o',color='red')
             plt.annotate("I", xy=(x,y))
 
             plt.xlabel('time [s]')

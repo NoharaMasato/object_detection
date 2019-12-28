@@ -2,29 +2,62 @@ import math
 import numpy as np
 
 # length_median_filterの役割も兼ねているので、こっちだけにする
+def vector_average_filter(row_mvs):
+    filtered_mvs = [[[[0,0,0,0,0] for x in range(len(row_mvs[0][0]))] for y in range(len(row_mvs[0]))] for k in range(len(row_mvs))]#i番目のフレームのy,x座標のmotion vector(sx,sy,dx,dy,length)の順で入っている
+    for t in range(len(row_mvs)):
+        print("\rprocessing frame:" + str(t),end='')
+        for y in range(len(row_mvs[0])):
+            for x in range(len(row_mvs[0][0])):
+                ave_vector = [0,0]
+                cnti = 0
+                for ti in [-1,0,1]:
+                    for yi in [-2,-1,0,1,2]:
+                        for xi in [-2,-1,0,1,2]:
+                            if y+yi >= 0 and y+yi < len(row_mvs[0]) and x+xi >= 0 and x+xi < len(row_mvs[0][0]) and t+ti < len(row_mvs) and t+ti >= 0:
+                                cnti += 1
+                                mv = row_mvs[t+ti][y+yi][x+xi]
+                                ave_vector[0] += mv[2] - mv[0]
+                                ave_vector[1] += mv[3] - mv[1]
+                filtered_mvs[t][y][x][0] = row_mvs[t][y][x][0]
+                filtered_mvs[t][y][x][1] = row_mvs[t][y][x][1]
+                filtered_mvs[t][y][x][2] = row_mvs[t][y][x][0] + ave_vector[0] // cnti
+                filtered_mvs[t][y][x][3] = row_mvs[t][y][x][1] + ave_vector[1] // cnti
+
+                mv_tmp = filtered_mvs[t][y][x]
+                filtered_mvs[t][y][x][4] = (mv_tmp[0]-mv_tmp[2])**2 + (mv_tmp[1] - mv_tmp[3])**2
+    return filtered_mvs
+
 def vector_median_filter(row_mvs):
     filtered_mvs = [[[[0,0,0,0,0] for x in range(len(row_mvs[0][0]))] for y in range(len(row_mvs[0]))] for k in range(len(row_mvs))]#i番目のフレームのy,x座標のmotion vector(sx,sy,dx,dy,length)の順で入っている
     for t in range(len(row_mvs)):
         print("\rprocessing frame:" + str(t),end='')
         for y in range(len(row_mvs[0])):
             for x in range(len(row_mvs[0][0])):
-                ave_row = [0,0,0,0,0]
+                # ave_vectorの方向に、大きさの中央値の分だけ移動させる
+                ave_vector = [0,0]
+                median_array = []
                 cnti = 0
                 for ti in [-1,0,1]:
                     for yi in [-2,-1,0,1,2]:
                         for xi in [-2,-1,0,1,2]:
                             if y+yi >= 0 and y+yi < len(row_mvs[0]) and x+xi >= 0 and x+xi < len(row_mvs[0][0]) and t+ti < len(row_mvs) and t+ti >= 0:
+                                cnti += 1
                                 mv = row_mvs[t+ti][y+yi][x+xi]
-                                for j in range(4):
-                                    ave_row[j] += mv[j]
-                                if mv != [0,0,0,0]:
-                                    cnti += 1
-                for j in range(4):
-                    # ここをそもそもcntiで割っていたのではノイズは消せない
-                    if cnti != 0:
-                        filtered_mvs[t][y][x][j] = ave_row[j]//cnti
-                mv_tmp = filtered_mvs[t][y][x]
-                filtered_mvs[t][y][x][4] = (mv_tmp[0]-mv_tmp[2])**2 + (mv_tmp[1] - mv_tmp[3])**2
+                                ave_vector[0] += mv[2] - mv[0]
+                                ave_vector[1] += mv[3] - mv[1]
+                                median_array.append((mv[2] - mv[0])**2 + (mv[3] - mv[1])**2) 
+                ave_len = math.sqrt(ave_vector[0]**2 + ave_vector[1]**2)
+                if ave_len != 0:
+                    median_array.sort()
+                    median_vector_length = math.sqrt(median_array[cnti//10*9])
+                    if median_vector_length != 0:
+                        filtered_mvs[t][y][x][0] = row_mvs[t][y][x][0]
+                        filtered_mvs[t][y][x][1] = row_mvs[t][y][x][1]
+                        filtered_mvs[t][y][x][2] = row_mvs[t][y][x][0] + int(ave_vector[0] / ave_len * median_vector_length)
+                        filtered_mvs[t][y][x][3] = row_mvs[t][y][x][1] + int(ave_vector[1] / ave_len * median_vector_length)
+
+                        mv_tmp = filtered_mvs[t][y][x]
+                        filtered_mvs[t][y][x][4] = (mv_tmp[0]-mv_tmp[2])**2 + (mv_tmp[1] - mv_tmp[3])**2
     return filtered_mvs
 
 # このフィルタの問題点として、mvがそもそもフレーム間での正規化を行なっていないという問題がある。
@@ -32,7 +65,7 @@ def vector_median_filter(row_mvs):
 def temporal_median_fiter(row_mvs):
     filtered_mvs = [[[[0,0,0,0,0] for x in range(len(row_mvs[0][0]))] for y in range(len(row_mvs[0]))] for k in range(len(row_mvs))] #大きさの平均
     for t in range(len(row_mvs)):
-        #print("\rprocessing frame:" + str(t),end='')
+        print("\rprocessing frame:" + str(t),end='')
         for y in range(len(row_mvs[0])):
             for x in range(len(row_mvs[0][0])):
                 mv = row_mvs[t][y][x]

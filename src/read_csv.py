@@ -3,6 +3,7 @@ import numpy as np
 import os
 import consts
 import vector_filter
+import subprocess
 
 frame_num = consts.FRAME_NUM
 frame_width = consts.FRAME_WIDTH
@@ -52,6 +53,9 @@ def read_filtered_mv_from_csv(csv_file_path):
     if os.path.exists(filtered_numpy_file_name):#もうある場合はここで読み込む:
         mvs = np.load(file=filtered_numpy_file_name).tolist()
     else:
+        if not os.path.exists(csv_file_path):#csvがない場合はここで作る
+            breakpoint()
+            subprocess.call(["./extract_mvs","obt/"+consts.FILE_NAME + ".mp4",">","mv_csv/" + consts.FILE_NAME + ".csv"]) 
         mvs = parse_mv_from_csv(csv_file_path)
         if consts.FILTER == "MEDIAN":
             mvs = vector_filter.vector_median_filter(mvs)

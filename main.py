@@ -16,7 +16,6 @@ import read_csv
 from myobject import *
 import consts
 
-
 def detect_object_from_key_frame(filepath,mvs):
     myvideoav = MyVideoAV(filepath)
     cnt=0
@@ -27,6 +26,8 @@ def detect_object_from_key_frame(filepath,mvs):
         cnt+=1
         if cnt == 1:
             myvideoav.init_meta_data(myframe.data)
+            if consts.OBT:
+                continue
 
         myvideoav.frames.append(myframe)
         #ここで、key_frameとそれ以外に分けて、物体検知をしたポインタを返したい
@@ -38,9 +39,15 @@ def detect_object_from_key_frame(filepath,mvs):
             if consts.YOLO:
                 pts, display_txts = yolo.detect_from_yolo(myframe.data,cnt)
 
-            for pt, display_txt in zip(pts, display_txts):
-                myobject = MyObject(pt,display_txt,(0,0,255))
+            if consts.OBT:
+                # ptsから近いptを選ぶ
+                pt = myvideoav.select_nearest_pt(pts,before_objects[0])
+                myobject = MyObject(pt,'',(0,0,255))
                 myvideoav.add_object(myobject)
+            else:
+                for pt, display_txt in zip(pts, display_txts):
+                    myobject = MyObject(pt,display_txt,(0,0,255))
+                    myvideoav.add_object(myobject)
         else:
             if consts.VECTOR_DIR:
                 for myobject in myvideoav.objects:
@@ -124,10 +131,17 @@ def detect_object_from_all_frame(file_path):
         else:
             break
 
-        myvideo.reset_objects()
-        for pt, display_txt in zip(pts, display_txts):
-            myobject = MyObject(pt,display_txt,(0,0,255))
+        before_objects = myvideo.reset_objects()
+        if consts.OBT:
+            pt = myvideo.select_nearest_pt(pts,before_objects[0])
+            if pt == []:
+                pt = before_objects[0].pt
+            myobject = MyObject(pt,'',(0,0,255))
             myvideo.add_object(myobject)
+        else:
+            for pt, display_txt in zip(pts, display_txts):
+                myobject = MyObject(pt,display_txt,(0,0,255))
+                myvideo.add_object(myobject)
 
         myvideo.frames.append(myframe)
         myvideo.forward_frame(save = consts.SAVE,play = consts.PLAY)
@@ -199,7 +213,10 @@ if __name__ == '__main__':
     if len(args) != 2:
         print("引数にi or all or show_mv or play を入れてください")
         exit(1)
-    file_path = "sample_videos/" +  consts.FILE_NAME + ".mp4"
+    if consts.OBT:
+        file_path = "obt/"+consts.FILE_NAME + ".mp4"
+    else:
+        file_path = "sample_videos/" +  consts.FILE_NAME + ".mp4"
 
     if args[1] == "all":
         detect_object_from_all_frame(file_path)

@@ -4,6 +4,7 @@ weights/*
 !weights/.keep
 numpy_array/*.npy
 sample_videos/*.mp4
+obt/*.mp4
 .DS_Store
 ,./
 ''

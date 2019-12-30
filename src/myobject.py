@@ -10,6 +10,7 @@ class MyVideo:
     def __init__(self):
         self.frames = []
         self.objects = []
+        self.gts = []
 
     def reset_objects(self):
         before_objects = self.objects
@@ -28,6 +29,11 @@ class MyVideo:
         self.width = len(data[0])
         self.height = len(data)
         fourcc = cv2.VideoWriter_fourcc(*'MPEG')
+        if consts.OBT:
+            gts = [i.split(',') for i in open("obt_gt/" + consts.FILE_NAME + "_gt.txt", "r").read().split('\n')]
+            self.gts = accuracy.parse_obt_gts(gts)
+            myobject = MyObject(self.gts[0],'',(0,0,255))
+            self.add_object(myobject)
         if consts.SAVE:
             self.out = cv2.VideoWriter('output_videos/output.mp4',fourcc, 20.0, (self.width,self.height))
         self.accuracies = []
@@ -52,15 +58,18 @@ class MyVideo:
             if consts.ACCURACY_PRINT == 1:
                 print("accuracy:" + str((sum(self.accuracies) / len(self.accuracies))*100) + "%,IoU:"+str(self.accuracies[-1]))
 
-    def calculate_accuracy(self,frame_cnt):
-        xml_file = "gt/"+consts.FILE_NAME+"/image_" + str(frame_cnt).zfill(3) + ".xml"
-        xml_data = open(xml_file, "r").read()
-        root = ET.fromstring(xml_data)
-        pt = [0,0,0,0]
-        if len(self.objects) > 0:
-            pt = self.objects[-1].pt
-        groud_truth = [int(root[6][4][i].text) for i in range(4)]
-        IoU = accuracy.bb_iou(pt,groud_truth)
+    def calculate_accuracy(self,frame_cnt): #frame_cntは0-indexed
+        if consts.OBT:
+           IoU = accuracy.bb_iou(self.objects[0].pt,self.gts[frame_cnt])
+        else:
+            xml_file = "gt/"+consts.FILE_NAME+"/image_" + str(frame_cnt).zfill(3) + ".xml"
+            xml_data = open(xml_file, "r").read()
+            root = ET.fromstring(xml_data)
+            pt = [0,0,0,0]
+            if len(self.objects) > 0:
+                pt = self.objects[-1].pt
+            groud_truth = [int(root[6][4][i].text) for i in range(4)]
+            IoU = accuracy.bb_iou(pt,groud_truth)
         if consts.USE_mAP50:
             if IoU >= 0.5:
                 self.accuracies.append(1)
@@ -84,10 +93,10 @@ class MyVideo:
         before_pt = myobject.pt
         # ptsの中からbefore_ptに一番近いものを選ぶ
         nearest_pt = []
-        nearest_distance = 10000000 
+        biggest_iou = 0.0 #これより小さいiouのbbは無視する
         for pt in pts:
-            distance = (pt[0]+pt[2]-(before_pt[0]-before_pt[2]))**2 + (pt[1]+pt[3]-(before_pt[1]-before_pt[3]))**2
-            if distance < nearest_distance: #近いという条件
+            iou = accuracy.bb_iou(before_pt,pt)
+            if iou > biggest_iou: #近いという条件
                 nearest_pt = pt
         return nearest_pt
 
@@ -116,6 +125,7 @@ class MyFrame:
     
     def embed_object_to_frame(self,objects):
         for object in objects:
+            print(object.pt)
             cv2.rectangle(self.data, (object.pt[0], object.pt[1]), (object.pt[2], object.pt[3]), color=object.color, thickness=2)
             cv2.putText(self.data, object.text,(object.pt[0],object.pt[1]),cv2.FONT_HERSHEY_SIMPLEX,consts.LITERAL_SIZE,object.color,int(consts.LITERAL_SIZE*2),cv2.LINE_AA)
 
@@ -157,6 +167,7 @@ class MyObject:
                 self.pt[i] += grad
             else:
                 self.pt[i] = next_pt[i]
+            self.pt[i] = int(self.pt[i])
 
     def object_distance(self,myobject):
         distance = ((self.pt[0]+self.pt[2])/2 - (myobject.pt[0]+myobject.pt[2])/2)**2 + ((self.pt[1]+self.pt[3])/2 - (myobject.pt[1]+myobject.pt[3])/2)**2 

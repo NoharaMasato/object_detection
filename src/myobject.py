@@ -155,6 +155,8 @@ class MyObject:
 
     # 動きを計算して、次の位置を返す
     def move(self,next_pt):
+        if next_pt == []:
+            return
         # 動きすぎの問題と、形が変わりすぎの問題を解決して、ptをselfにセットする
         grad = consts.GRAD_FRAME #一度に動いてよい範囲(犬の動画は15ぐらいがちょうど良い)
         for i in range(4):

@@ -60,7 +60,7 @@ def dfs_draw(nowx,nowy,mvs,frame):
         for i in range(4):
             nextx = nowx + nx[i]
             nexty = nowy + ny[i]
-            if (nextx>=0 and nexty>=0 and mvs[nowy][nowx][4] > mv_len_threash and grouping_draw[nexty][nextx] == 0):
+            if (nextx>=0 and nexty>=0 and nextx < frame_width and nexty < frame_height and mvs[nowy][nowx][4] > mv_len_threash and grouping_draw[nexty][nextx] == 0):
                 dfs_draw(nextx,nexty,mvs,frame)
 
 now_dt = []

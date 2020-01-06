@@ -58,7 +58,7 @@ def detect_object_from_key_frame(filepath,mvs):
             else:
                 pts_tmp = ssd_model_opencv.detect_from_mv(myframe.data,myframe.cnt,myframe.mvs)
                 for myobject in myvideoav.objects:
-                    if (len(pts_tmp) != 0):
+                    if len(pts_tmp) != 0:
                         next_pt = myvideoav.select_nearest_pt(pts_tmp,myobject)
                         myobject.move(next_pt) #objectを動かす
                         myobject.color = (255,0,0)

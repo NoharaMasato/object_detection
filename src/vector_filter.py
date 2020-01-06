@@ -82,6 +82,18 @@ def temporal_median_fiter(row_mvs):
                     filtered_mvs[t][y][x][4] = (mv[0]-mv[2])**2 + (mv[1]-mv[3])**2
     return filtered_mvs
 
+def no_filter(row_mvs):
+    filtered_mvs = [[[[0,0,0,0,0] for x in range(len(row_mvs[0][0]))] for y in range(len(row_mvs[0]))] for k in range(len(row_mvs))]#i番目のフレームのy,x座標のmotion vector(sx,sy,dx,dy,length)の順で入っている
+    for t in range(len(row_mvs)):
+        print("\rprocessing frame:" + str(t),end='')
+        for y in range(len(row_mvs[0])):
+            for x in range(len(row_mvs[0][0])):
+                mv = row_mvs[t][y][x]
+                for i in range(4):
+                    filtered_mvs[t][y][x][i] = int(mv[i])
+                filtered_mvs[t][y][x][4] = int(math.sqrt((mv[0]-mv[2])**2+(mv[1]-mv[3])**2))
+    return filtered_mvs
+
 def tci(mv_t,mv_t_1,mv_t_2):
     tmp = R(mv_t,mv_t_1)*R(mv_t_1,mv_t_2)
     return math.sqrt(tmp)

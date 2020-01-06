@@ -1,5 +1,5 @@
 PLAY = 1
-SAVE = 0
+SAVE = 1
 
 SSD = 1
 YOLO = 0
@@ -7,25 +7,25 @@ if SSD + YOLO != 1:
     print("SSD or YOLOのどちらかを1にしてください")
     exit(0)
 
-DRAW_MV = 0
+DRAW_MV = 1
 
-VECTOR_DIR = 0 # １の場合はベクトルの大きさだけを考慮する 
+VECTOR_DIR = 0 # 0の場合はベクトルの大きさだけを考慮する 
 
 # MV_FILTERを決める
-FILTER = "MEDIAN"
+#FILTER = "MEDIAN"
 #FILTER = "TF"
-#FILTER = ""
+FILTER = ""
 
 OBT = 0 #OBTのデータセットを使うかどうか
 
-ACCURACY = 1 #精度を求めるか(現在は犬の動画しかground truthを取っていないためその他の動画では不可能)
+ACCURACY = 0 #精度を求めるか(現在は犬の動画しかground truthを取っていないためその他の動画では不可能)
 if ACCURACY == 1:
     USE_mAP50 = 1
     ACCURACY_PRINT = 0 #精度を毎回表示するか
     I_INTER_VALS = [1,2,3,4,5,6,7,8,9,10,20,30,40,50,60,70,80,90,100,150]
 
 # dog outだと5が精度が良くなる
-MV_THREASH = 5 #mvの大きさのスレッシュホールド
+MV_THREASH = 0 #mvの大きさのスレッシュホールド
 
 CONSIDER_OVERLAPPED = 1 #objectが重なっている時(ある一定以上近い時)にもう一度物体認識にかけるかどうか
 

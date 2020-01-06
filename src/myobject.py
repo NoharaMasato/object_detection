@@ -125,7 +125,6 @@ class MyFrame:
     
     def embed_object_to_frame(self,objects):
         for object in objects:
-            print(object.pt)
             cv2.rectangle(self.data, (object.pt[0], object.pt[1]), (object.pt[2], object.pt[3]), color=object.color, thickness=2)
             cv2.putText(self.data, object.text,(object.pt[0],object.pt[1]),cv2.FONT_HERSHEY_SIMPLEX,consts.LITERAL_SIZE,object.color,int(consts.LITERAL_SIZE*2),cv2.LINE_AA)
 
@@ -136,8 +135,6 @@ class MyFrame:
         for y in range(len(self.mvs)):
             for x in range(len(self.mvs[y])):
                 mv = self.mvs[y][x]
-                if mv != [0,0,0,0,0]:
-                    print(mv)
                 cv2.arrowedLine(self.data, (mv[0],mv[1]), (mv[2],mv[3]), color=(0,0,255), thickness=1, line_type=cv2.LINE_8, shift=0, tipLength=0.1)
 
     def display_frame(self):

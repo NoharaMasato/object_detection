@@ -23,3 +23,12 @@ def parse_obt_gts(gts):
         ret_gt.append([src_x,src_y,src_x + width,src_y + height]) 
     return ret_gt
 
+#ptsの中から最もgtと最もIoUが高いものを選んで、IoUを返す
+def calculate_biggest_iou(pts,gt):
+    biggest_iou = 0.0
+    for pt in pts:
+        iou = bb_iou(gt,pt)
+        if iou > biggest_iou: #近いという条件
+            biggest_iou = iou
+    return biggest_iou 
+

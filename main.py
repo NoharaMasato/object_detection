@@ -41,7 +41,7 @@ def detect_object_from_key_frame(filepath,mvs):
 
             if consts.OBT:
                 # ptsから近いptを選ぶ
-                pt = myvideoav.select_nearest_pt(pts,before_objects[0])
+                pt = myvideoav.select_nearest_pt(pts,before_objects[0].pt)
                 myobject = MyObject(pt,'',(0,0,255))
                 myvideoav.add_object(myobject)
             else:
@@ -59,7 +59,7 @@ def detect_object_from_key_frame(filepath,mvs):
                 pts_tmp = ssd_model_opencv.detect_from_mv(myframe.data,myframe.cnt,myframe.mvs)
                 for myobject in myvideoav.objects:
                     if len(pts_tmp) != 0:
-                        next_pt = myvideoav.select_nearest_pt(pts_tmp,myobject)
+                        next_pt = myvideoav.select_nearest_pt(pts_tmp,myobject.pt)
                         myobject.move(next_pt) #objectを動かす
                         myobject.color = (255,0,0)
 
@@ -83,7 +83,7 @@ def change_detect_interval(filepath,mvs,interval):
 
         myvideoav.frames.append(myframe)
         #ここで、key_frameとそれ以外に分けて、物体検知をしたポインタを返したい
-        if (cnt-1)%interval == 0:
+        if (cnt-1)%interval == 0 or frame.key_frame:
             myvideoav.reset_objects()
 
             if consts.SSD:
@@ -105,7 +105,7 @@ def change_detect_interval(filepath,mvs,interval):
                 pts_tmp = ssd_model_opencv.detect_from_mv(myframe.data,myframe.cnt,myframe.mvs)
                 for myobject in myvideoav.objects:
                     if (len(pts_tmp) != 0):
-                        next_pt = myvideoav.select_nearest_pt(pts_tmp,myobject)
+                        next_pt = myvideoav.select_nearest_pt(pts_tmp,myobject.pt)
                         myobject.move(next_pt) #objectを動かす
                         myobject.color = (255,0,0)
 
@@ -133,7 +133,7 @@ def detect_object_from_all_frame(file_path):
 
         before_objects = myvideo.reset_objects()
         if consts.OBT:
-            pt = myvideo.select_nearest_pt(pts,before_objects[0])
+            pt = myvideo.select_nearest_pt(pts,before_objects[0].pt)
             if pt == []:
                 pt = before_objects[0].pt
             myobject = MyObject(pt,'',(0,0,255))
@@ -243,16 +243,23 @@ if __name__ == '__main__':
                 print ("かかった時間:{0}".format(elapsed_time) + "[sec]:"+ str(i) + "枚ごとに検出,最終的な精度:" + str(accuracies[-1]) + "%")
 
             for x,y,k in zip(elapsed_times,accuracies,consts.I_INTER_VALS):
-                plt.plot(x,y,'o',color='blue')
+                x = 300 // x #time -> FPS
+                plt.plot(x,y,'o',color='Cyan')
+                plt.annotate(str(300//k), xy=(x,y))
 
             start_inter = time.time()
             y = detect_object_from_key_frame(file_path,mvs) #Iフレームのみの回
             x = time.time() - start_inter
-            plt.plot(x,y,'o',color='red')
-            plt.annotate("I", xy=(x,y))
+            print ("かかった時間:{0}".format(x) + "[sec]:"+ "Iフレームのみ検出,最終的な精度:" + str(y) + "%")
+            x = 300 // x
+            plt.plot(x,y,'o',color='Cyan')
+            plt.annotate("2", xy=(x,y))
 
-            plt.xlabel('time [s]')
-            plt.ylabel('accuracy [%]')
+            plt.xlabel('through put [FPS]')
+            if consts.USE_mAP50:
+                plt.ylabel('mAP50')
+            else:
+                plt.ylabel('accuracy')
             plt.show()
         else:
             print("引数にi or all or show_mv or play を入れてください")

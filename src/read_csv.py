@@ -58,9 +58,11 @@ def read_filtered_mv_from_csv(csv_file_path):
         row_mvs = parse_mv_from_csv(csv_file_path)
         if consts.FILTER == "MEDIAN":
             mvs = vector_filter.vector_median_filter(row_mvs)
+        elif consts.FILTER == "AVERAGE":
+            mvs = vector_filter.vector_average_filter(row_mvs)
         elif consts.FILTER == "TF":
             mvs = vector_filter.temporal_median_fiter(row_mvs)
-        elif consts.FILTER == "":
+        elif consts.FILTER == "NO_FILTER":
             mvs = vector_filter.no_filter(row_mvs)
         print("finish filtering motion vectors")
         np.save(filtered_numpy_file_name, np.array(mvs))

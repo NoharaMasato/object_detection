@@ -65,14 +65,11 @@ class MyVideo:
             xml_file = "gt/"+consts.FILE_NAME+"/image_" + str(frame_cnt).zfill(3) + ".xml"
             xml_data = open(xml_file, "r").read()
             root = ET.fromstring(xml_data)
-            for i in range(6,len(root)):
-                pt = [0,0,0,0]
-                if len(self.objects) > 0:
-                    pt = self.objects[-1].pt
-                pts = [myobject.pt for myobject in self.objects]
-                ground_truth = [int(root[i][4][j].text) for j in range(4)]
-                IoU = accuracy.calculate_biggest_iou(pts,ground_truth) #ground_truthと一番近いbbのIoUを返す
-                print("gt:" + str(ground_truth) + ",IoU:" + str(IoU))
+            pt = [0,0,0,0]
+            if len(self.objects) > 0:
+                pt = self.objects[-1].pt
+            groud_truth = [int(root[6][4][i].text) for i in range(4)]
+            IoU = accuracy.bb_iou(pt,groud_truth)
         if consts.USE_mAP50:
             if IoU >= 0.5:
                 self.accuracies.append(1)
@@ -91,13 +88,14 @@ class MyVideo:
                     return True
         return False
 
-    # object_ptに最も近いptを候補のptsから選び、戻り値として返す
-    def select_nearest_pt(self,pts,object_pt):
+    # myobjectに適したptsを候補のptsから選び、戻り値として返す
+    def select_nearest_pt(self,pts,myobject):
+        before_pt = myobject.pt
         # ptsの中からbefore_ptに一番近いものを選ぶ
         nearest_pt = []
         biggest_iou = 0.0 #これより小さいiouのbbは無視する
         for pt in pts:
-            iou = accuracy.bb_iou(object_pt,pt)
+            iou = accuracy.bb_iou(before_pt,pt)
             if iou > biggest_iou: #近いという条件
                 nearest_pt = pt
         return nearest_pt

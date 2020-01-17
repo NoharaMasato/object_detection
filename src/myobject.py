@@ -186,11 +186,10 @@ class MyObject:
                     ave_vector[0] += mv[2] - mv[0]
                     ave_vector[1] += mv[3] - mv[1]
                     cntm += 1
-
         ave_vector[0] /= cnt
         ave_vector[1] /= cnt
 
-        if cntm / cnt <= 0.5:
+        if cntm / cnt <= 0.5: #物体のうちの動きベクトルのある範囲
             ave_vector[0] = 0
             ave_vector[1] = 0
         return ave_vector

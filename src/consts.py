@@ -1,5 +1,5 @@
 PLAY = 1
-SAVE = 0
+SAVE = 1
 
 SSD = 1
 YOLO = 0
@@ -7,17 +7,15 @@ if SSD + YOLO != 1:
     print("SSD or YOLOのどちらかを1にしてください")
     exit(0)
 
+# dog outだと5が精度が良くなる
+MV_THREASH = 1 #mvの大きさのスレッシュホールド
+CONSIDER_OVERLAPPED = 0 #objectが重なっている時(ある一定以上近い時)にもう一度物体認識にかけるかどうか
 DRAW_MV = 0
-
 VECTOR_DIR = 1 # 0の場合はベクトルの大きさだけを考慮する 
+OBT = 0 #OBTのデータセットを使うかどうか
 
 # MV_FILTERを決める
-#FILTER = "MEDIAN"
-FILTER = "AVERAGE"
-#FILTER = "TF"
-#FILTER = "NO_FILTER"
-
-OBT = 0 #OBTのデータセットを使うかどうか
+FILTER = ["MEDIAN","AVERAGE","TF","NO_FILTER"][1]
 
 ACCURACY = 0 #精度を求めるか(現在は犬の動画しかground truthを取っていないためその他の動画では不可能)
 if ACCURACY == 1:
@@ -25,12 +23,6 @@ if ACCURACY == 1:
     ACCURACY_PRINT = 0 #精度を毎回表示するか
     I_INTER_VALS = [1,2,3,5,6,8,9,10,20,30,80]
     #I_INTER_VALS = [80]
-
-# dog outだと5が精度が良くなる
-MV_THREASH = 1 #mvの大きさのスレッシュホールド
-
-CONSIDER_OVERLAPPED = 0 #objectが重なっている時(ある一定以上近い時)にもう一度物体認識にかけるかどうか
-
 
 #FILE_NAME = "vtest"
 #FILE_NAME = "dog_out"

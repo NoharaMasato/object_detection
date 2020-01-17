@@ -98,7 +98,7 @@ def change_detect_interval(filepath,mvs,interval):
             if consts.VECTOR_DIR:
                 for myobject in myvideoav.objects:
                     vector = myobject.caliculate_vector(myframe.data,myframe.mvs)
-                    next_pt = [myobject.pt[i] + vector[i%2]*10 for i in range(4)] #ある定数をかけて、動かす
+                    next_pt = [myobject.pt[i] + vector[i%2]*5 for i in range(4)] #ある定数をかけて、動かす
                     myobject.move(next_pt) #objectを動かす
                     myobject.color = (255,0,0)
             else:

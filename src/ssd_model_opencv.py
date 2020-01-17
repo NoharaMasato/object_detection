@@ -84,7 +84,7 @@ def dfs_cnt_pt(nowx,nowy,mvs):
             if (nextx>=0 and nexty>=0 and mvs[nowy][nowx][4] > mv_len_threash and grouping_pt[nexty][nextx] == 0):
                 dfs_cnt_pt(nextx,nexty,mvs)
 
-def detect_from_mv(frame,cnt,mvs):
+def detect_from_mv(frame,mvs):
     global grouping_cnt
     global grouping,grouping_draw,grouping_pt
 
@@ -118,7 +118,7 @@ def detect_from_mv(frame,cnt,mvs):
     return pts
 
 # 関数 detect    
-def detect_from_ssd(image, count):
+def detect_from_ssd(image):
     rgb_image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     x = cv2.resize(image, (300, 300)).astype(np.float32)  # 300*300にリサイズ
     x -= (104.0, 117.0, 123.0)
@@ -149,11 +149,13 @@ def detect_from_ssd(image, count):
             display_txt = '%s: %.2f'%(label_name, score)
             pt = (detections[0,i,j,1:]*scale).cpu().numpy()
             coords = (pt[0], pt[1]), pt[2]-pt[0]+1, pt[3]-pt[1]+1
-            pts.append(pt)
-            display_txts.append(display_txt)
-            #color = colors[i]
-            #cv2.rectangle(image, (pt[0], pt[1]), (pt[2], pt[3]), color=(0, 255, 0), thickness=2)
-            #cv2.putText(image, display_txt,(pt[0],pt[1]),cv2.FONT_HERSHEY_SIMPLEX,1,(0,255,0),2,cv2.LINE_AA)
+            if consts.FILE_NAME == 'David3':
+                if label_name == 'person':
+                    pts.append(pt)
+                    display_txts.append(display_txt)
+            else:
+                pts.append(pt)
+                display_txts.append(display_txt)
             j+=1
     return pts,display_txts
  

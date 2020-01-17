@@ -48,21 +48,27 @@ class MyVideo:
     def forward_frame(self,save = 0,play = 1):
         myframe = self.frames[-1]
         myframe.embed_object_to_frame(self.objects)
+        if consts.OBT and consts.SHOW_OBT_GT:
+            myframe.embed_gt_to_frame(self.gts[myframe.cnt])
 
         if save != 0:
             myframe.save_frame(self)
         if play != 0:
             myframe.display_frame()
         if consts.ACCURACY == 1:
-            self.calculate_accuracy(len(self.frames))
+            self.calculate_accuracy(myframe.cnt)
             if consts.ACCURACY_PRINT == 1:
-                print("\raccuracy:" + str(int((sum(self.accuracies) / len(self.accuracies))*100)) + "%,IoU:"+str(self.accuracies[-1]),end='')
+                print("accuracy:" + str(int((sum(self.accuracies) / len(self.accuracies))*100)) + "%,IoU:"+str(self.accuracies[-1]))
 
     def calculate_accuracy(self,frame_cnt): #frame_cntは0-indexed
         if consts.OBT:
-           IoU = accuracy.bb_iou(self.objects[0].pt,self.gts[frame_cnt])
+            if self.objects != []:
+                target_object_pt = self.objects[0].pt
+            else:
+                target_object_pt = [0,0,0,0]
+            IoU = accuracy.bb_iou(target_object_pt, self.gts[frame_cnt])
         else:
-            xml_file = "gt/"+consts.FILE_NAME+"/image_" + str(frame_cnt).zfill(3) + ".xml"
+            xml_file = "gt/"+consts.FILE_NAME+"/image_" + str(frame_cnt+1).zfill(3) + ".xml" #xmlファイルの番号は1-indexed
             xml_data = open(xml_file, "r").read()
             root = ET.fromstring(xml_data)
             for i in range(6,len(root)):
@@ -72,7 +78,7 @@ class MyVideo:
                 pts = [myobject.pt for myobject in self.objects]
                 ground_truth = [int(root[i][4][j].text) for j in range(4)]
                 IoU = accuracy.calculate_biggest_iou(pts,ground_truth) #ground_truthと一番近いbbのIoUを返す
-                print("gt:" + str(ground_truth) + ",IoU:" + str(IoU))
+                #print("gt:" + str(ground_truth) + ",IoU:" + str(IoU))
         if consts.USE_mAP50:
             if IoU >= 0.5:
                 self.accuracies.append(1)
@@ -117,7 +123,7 @@ class MyVideoAV(MyVideo):
 
 class MyFrame:
     def __init__(self,frame,key_frame,cnt,mvs = []):
-        self.cnt = cnt
+        self.cnt = cnt #0-indexed
         self.data = frame
         self.key_frame = key_frame
         self.mvs = mvs
@@ -129,6 +135,9 @@ class MyFrame:
         for object in objects:
             cv2.rectangle(self.data, (object.pt[0], object.pt[1]), (object.pt[2], object.pt[3]), color=object.color, thickness=2)
             cv2.putText(self.data, object.text,(object.pt[0],object.pt[1]),cv2.FONT_HERSHEY_SIMPLEX,consts.LITERAL_SIZE,object.color,int(consts.LITERAL_SIZE*2),cv2.LINE_AA)
+
+    def embed_gt_to_frame(self,gt):
+        cv2.rectangle(self.data, (gt[0],gt[1]),(gt[2],gt[3]), color = (255,255,0), thickness=2)
 
     def save_frame(self,myvideo):
         myvideo.out.write(self.data)

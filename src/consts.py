@@ -1,5 +1,5 @@
 PLAY = 1
-SAVE = 1
+SAVE = 0
 
 SSD = 1
 YOLO = 0
@@ -12,12 +12,16 @@ MV_THREASH = 1 #mvの大きさのスレッシュホールド
 CONSIDER_OVERLAPPED = 0 #objectが重なっている時(ある一定以上近い時)にもう一度物体認識にかけるかどうか
 DRAW_MV = 0
 VECTOR_DIR = 1 # 0の場合はベクトルの大きさだけを考慮する 
+
 OBT = 0 #OBTのデータセットを使うかどうか
+if OBT:
+    SHOW_OBT_GT = 1
+
 
 # MV_FILTERを決める
 FILTER = ["MEDIAN","AVERAGE","TF","NO_FILTER"][1]
 
-ACCURACY = 0 #精度を求めるか(現在は犬の動画しかground truthを取っていないためその他の動画では不可能)
+ACCURACY = 1 #精度を求めるか(現在は犬の動画しかground truthを取っていないためその他の動画では不可能)
 if ACCURACY == 1:
     USE_mAP50 = 1
     ACCURACY_PRINT = 0 #精度を毎回表示するか
@@ -25,11 +29,11 @@ if ACCURACY == 1:
     #I_INTER_VALS = [80]
 
 #FILE_NAME = "vtest"
-#FILE_NAME = "dog_out"
+FILE_NAME = "dog_out"
 #FILE_NAME = "David3"
 #FILE_NAME = "bike"
 #FILE_NAME = "car"
-FILE_NAME = "kanshi"
+#FILE_NAME = "kanshi"
 #FILE_NAME = "kanshi2"
 #FILE_NAME = "kanshi3"
 #FILE_NAME = "walk"
@@ -99,8 +103,9 @@ elif FILE_NAME == "walk1":
     LITERAL_SIZE = 1
 
 elif FILE_NAME == "David3":
-    FRAME_NUM = 253
+    FRAME_NUM = 252
     FRAME_WIDTH = 90
     FRAME_HEIGHT = 65
     GRAD_FRAME = 15
     LITERAL_SIZE = 1
+

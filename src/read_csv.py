@@ -26,7 +26,7 @@ def parse_mv_from_csv(csv_file_path):
                 print(f'Column names are {", ".join(row)}')
                 line_count += 1
             else:
-                frame_cnt= int(row[0].split()[-1])
+                frame_cnt= int(row[0].split()[-1]) -1 # 0-indexed
                 row.pop(0)
                 x = int(row[3])//8
                 y = int(row[4])//8

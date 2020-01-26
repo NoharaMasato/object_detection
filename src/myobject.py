@@ -78,7 +78,6 @@ class MyVideo:
                 pts = [myobject.pt for myobject in self.objects]
                 ground_truth = [int(root[i][4][j].text) for j in range(4)]
                 IoU = accuracy.calculate_biggest_iou(pts,ground_truth) #ground_truthと一番近いbbのIoUを返す
-                #print("gt:" + str(ground_truth) + ",IoU:" + str(IoU))
         if consts.USE_mAP50:
             if IoU >= 0.5:
                 self.accuracies.append(1)

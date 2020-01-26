@@ -5,7 +5,6 @@ from PIL import Image
 import av
 import os
 import numpy as np
-import matplotlib.pyplot as plt
 import sys
 
 sys.path.append('src')
@@ -62,7 +61,7 @@ def detect_object_from_key_frame(filepath,mvs,interval=0):
             print("final_accuracy:" + str((sum(myvideoav.accuracies) / len(myvideoav.accuracies))*100) + "%")
         return sum(myvideoav.accuracies) / len(myvideoav.accuracies)
 
-def detect_object_from_all_frame(file_path):
+def detect_object_from_all_frame(file_path,interval):
     myvideo = MyVideoNormal(file_path)
     cnt=0
     while(myvideo.cap.isOpened()):
@@ -71,26 +70,32 @@ def detect_object_from_all_frame(file_path):
         if cnt == 0:
             myvideo.init_meta_data(myframe.data)
         if myframe != 0:
-            if consts.SSD:
-                pts, display_txts = ssd_model_opencv.detect_from_ssd(myframe.data)
-            if consts.YOLO:
-                pts, display_txts = yolo.detect_from_yolo(myframe.data,cnt)
+            if interval != 0 and cnt % interval == 0:
+                if consts.SSD:
+                    pts, display_txts = ssd_model_opencv.detect_from_ssd(myframe.data)
+                if consts.YOLO:
+                    pts, display_txts = yolo.detect_from_yolo(myframe.data,cnt)
+
+                if pts != []:
+                    before_objects = myvideo.reset_objects()
+                for pt, display_txt in zip(pts, display_txts):
+                    myobject = MyObject(pt,display_txt,(0,0,255))
+                    myvideo.add_object(myobject)
+
         else:
             break
 
-        if pts != []:
-            before_objects = myvideo.reset_objects()
-        for pt, display_txt in zip(pts, display_txts):
-            myobject = MyObject(pt,display_txt,(0,0,255))
-            myvideo.add_object(myobject)
-
         myvideo.frames.append(myframe)
+        myvideo.calculate_accuracy(cnt)
         myvideo.forward_frame(save = consts.SAVE,play = consts.PLAY)
         cnt+=1
 
     myvideo.finish_play()
+
     if consts.ACCURACY:
-        print("final_accuracy:" + str((sum(myvideo.accuracies) / len(myvideo.accuracies))*100) + "%")
+        if consts.ACCURACY_PRINT:
+            print("final_accuracy:" + str((sum(myvideoav.accuracies) / len(myvideoav.accuracies))*100) + "%")
+        return sum(myvideo.accuracies) / len(myvideo.accuracies)
 
 def detect_only_i(filepath):
     myvideoav = MyVideoAV(filepath)
@@ -154,11 +159,11 @@ if __name__ == '__main__':
 
     if len(args) != 2:
         print("引数にi or all or show_mv or play を入れてください")
-        if args[1] == 'i' and len(args) == 3:
+        if (args[1] == 'i' or args[1] == 'all') and len(args) == 3:
             interval = int(args[2])
         else:
             exit(1)
-    elif args[1] == 'i':
+    elif args[1] == 'i' or args[1] == 'all':
         interval = 0
 
     if consts.OBT:
@@ -167,11 +172,21 @@ if __name__ == '__main__':
         file_path = "sample_videos/" +  consts.FILE_NAME + ".mp4"
 
     if args[1] == "all":
-        detect_object_from_all_frame(file_path)
+        detect_object_from_all_frame(file_path,interval)
     elif args[1] == "play":
         just_play(file_path)
     elif args[1] == "di": # detect only i
         detect_only_i(file_path)
+    elif args[1] == 'inter_all': #動きベクトルを使わず、ただ間引くだけ
+        accuracies = []
+        elapsed_times = []
+        for i in consts.I_INTER_VALS:
+            start_inter = time.time()
+            accuracies.append(detect_object_from_all_frame(file_path,i))
+            elapsed_time = time.time() - start_inter
+            elapsed_times.append(elapsed_time)
+            print ("かかった時間:{0}".format(elapsed_time) + "[sec]:"+ str(i) + "枚ごとに検出,最終的な精度:" + str(accuracies[-1]) + "%")
+        accuracy.show_graph(elapsed_times,accuracies)
     else: #動きベクトルを使う方
         csv_file_name = "mv_csv/" + consts.FILE_NAME + ".csv"
         mvs = read_csv.read_filtered_mv_from_csv(csv_file_name)
@@ -185,30 +200,18 @@ if __name__ == '__main__':
             accuracies = []
             for i in consts.I_INTER_VALS:
                 start_inter = time.time()
-                accuracies.append(detect_object_from_key_frame(file_path,mvs,i))
+                accuracies.append([detect_object_from_key_frame(file_path,mvs,i),0])
                 elapsed_time = time.time() - start_inter
                 elapsed_times.append(elapsed_time)
-                print ("かかった時間:{0}".format(elapsed_time) + "[sec]:"+ str(i) + "枚ごとに検出,最終的な精度:" + str(accuracies[-1]) + "%")
+                print ("かかった時間(動きベクトル):{0}".format(elapsed_time) + "[sec]:"+ str(i) + "枚ごとに検出,最終的な精度:" + str(accuracies[-1]) + "%")
 
-            for x,y,k in zip(elapsed_times,accuracies,consts.I_INTER_VALS):
-                x = 300 // x #time -> FPS
-                plt.plot(x,y,'o',color='Cyan')
-                plt.annotate(str(300//k), xy=(x,y))
+                start_inter = time.time()
+                accuracies.append([detect_object_from_all_frame(file_path,i),1])
+                elapsed_time = time.time() - start_inter
+                elapsed_times.append(elapsed_time)
+                print ("かかった時間(動きベクトル):{0}".format(elapsed_time) + "[sec]:"+ str(i) + "枚ごとに検出,最終的な精度:" + str(accuracies[-1]) + "%")
+            accuracy.show_graph(elapsed_times,accuracies)
 
-            start_inter = time.time()
-            y = detect_object_from_key_frame(file_path,mvs) #Iフレームのみの回
-            x = time.time() - start_inter
-            print ("かかった時間:{0}".format(x) + "[sec]:"+ "Iフレームのみ検出,最終的な精度:" + str(y) + "%")
-            x = 300 // x
-            plt.plot(x,y,'o',color='Cyan')
-            plt.annotate("2", xy=(x,y))
-
-            plt.xlabel('through put [FPS]')
-            if consts.USE_mAP50:
-                plt.ylabel('mAP50')
-            else:
-                plt.ylabel('accuracy')
-            plt.show()
         else:
             print("引数にi or all or show_mv or play を入れてください")
             exit(1)

@@ -1,3 +1,6 @@
+import consts
+import matplotlib.pyplot as plt
+
 def bb_iou(boxA, boxB):
     xA = max(boxA[0], boxB[0])
     yA = max(boxA[1], boxB[1])
@@ -31,4 +34,20 @@ def calculate_biggest_iou(pts,gt):
         if iou > biggest_iou: #近いという条件
             biggest_iou = iou
     return biggest_iou 
+
+def show_graph(elapsed_times,accuracies):
+    for x,y,k in zip(elapsed_times,accuracies,sorted(consts.I_INTER_VALS*2)):
+        x = 300 // x #time -> FPS
+        if y[1] == 1: #動きベクトルを使わない方
+            plt.plot(x,y[0],'o',color='Cyan')
+        if y[1] == 0: #動きベクトルを使う方
+            plt.plot(x,y[0],'o',color='Red')
+        plt.annotate(str(300//k), xy=(x,y[0]))
+
+    plt.xlabel('through put [FPS]')
+    if consts.USE_mAP50:
+        plt.ylabel('mAP50')
+    else:
+        plt.ylabel('accuracy')
+    plt.savefig('figure.png')
 

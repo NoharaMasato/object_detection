@@ -1,4 +1,4 @@
-PLAY = 1
+PLAY = 0
 SAVE = 0
 
 SSD = 1
@@ -8,24 +8,23 @@ if SSD + YOLO != 1:
     exit(0)
 
 # dog outだと5が精度が良くなる
-MV_THREASH = 1 #mvの大きさのスレッシュホールド
+MV_THREASH = 5 #mvの大きさのスレッシュホールド
 CONSIDER_OVERLAPPED = 0 #objectが重なっている時(ある一定以上近い時)にもう一度物体認識にかけるかどうか
 DRAW_MV = 0
 VECTOR_DIR = 1 # 0の場合はベクトルの大きさだけを考慮する 
 
 OBT = 0 #OBTのデータセットを使うかどうか
 if OBT:
-    SHOW_OBT_GT = 1
-
+    SHOW_OBT_GT = 1 #obt datasetのground truthを表示するか
 
 # MV_FILTERを決める
 FILTER = ["MEDIAN","AVERAGE","TF","NO_FILTER"][1]
 
 ACCURACY = 1 #精度を求めるか(現在は犬の動画しかground truthを取っていないためその他の動画では不可能)
 if ACCURACY == 1:
-    USE_mAP50 = 1
+    USE_mAP50 = 0
     ACCURACY_PRINT = 0 #精度を毎回表示するか
-    I_INTER_VALS = [1,2,3,5,6,8,9,10,20,30,80]
+    I_INTER_VALS = [1,2,3,5,6,8,9,10,20,30,80] #0はIフレームのみ検出、1は全フレーム検出
     #I_INTER_VALS = [80]
 
 #FILE_NAME = "vtest"
